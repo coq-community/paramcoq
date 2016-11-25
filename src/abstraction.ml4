@@ -18,14 +18,18 @@
 DECLARE PLUGIN "parametricity"
 open Parametricity
 open Declare_translation
+open Feedback
+open Constrarg
+open Stdarg
 
+(*
 VERNAC COMMAND EXTEND SetParametricityTactic CLASSIFIED AS SIDEFF
 | [ "Parametricity" "Tactic" ":=" tactic(t) ] -> [
     Relations.set_parametricity_tactic
       (Locality.make_section_locality (Locality.LocalityFixme.consume ()))
       (Tacintern.glob_tactic t) ]
 END
-
+*)
 VERNAC COMMAND EXTEND ShowTable CLASSIFIED AS QUERY
 | [ "Show" "Parametricity" "Table" ] -> [
   Relations.print_relations ()
@@ -44,7 +48,7 @@ VERNAC COMMAND EXTEND ParametricityDefined CLASSIFIED AS SIDEFF
 END
 
 VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF
-| [ "Parametricity" reference(c) ] -> 
+| [ "Parametricity" ref(c) ] -> 
   [
     command_reference default_arity (Constrintern.intern_reference c) None  
   ]
@@ -52,11 +56,11 @@ VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF
   [
     command_reference default_arity (Constrintern.intern_reference c) (Some name)
   ]
-| [ "Parametricity" reference(c) "arity" integer(arity) ] -> 
+| [ "Parametricity" reference(c) "arity" int(arity) ] -> 
   [
     command_reference arity (Constrintern.intern_reference c) None  
   ]
-| [ "Parametricity" reference(c) "arity" integer(arity) "as" ident(name) ] ->
+| [ "Parametricity" reference(c) "arity" int(arity) "as" ident(name) ] ->
   [
     command_reference arity (Constrintern.intern_reference c) (Some name)  
   ]
