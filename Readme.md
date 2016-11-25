@@ -5,12 +5,13 @@ But is useable enough to "translate" a large chunck of standard library.
 Compilation 
 ===========
 
-The plugin currently works with Coq 8.5pl1.
-The easy (and long) way to test the plugin is to follow the following steps:
+The plugin currently works with Coq 8.6(https://github.com/coq/coq/commit/a27ac0315dcbb99c64a260bac3988199a26b39cf).
+one way to test the plugin is to follow the following steps:
 
 * Retrieve the plugin and compile it:
 
-        git clone https://github.com/aa755/paramcoq.git
+        git clone ...
+        git checkout (* the correct branch *)
         cd paramcoq 
         make
         sudo make install
