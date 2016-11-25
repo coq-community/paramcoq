@@ -476,12 +476,12 @@ and translate_rel_context order evd env rc =
      let def_R = Option.map (translate order evd env) def in
      let typ_R = relation order evd env typ in
      let l :Context.Rel.t = range (fun k ->
-       (prime_name order k x,
+       toDecl (prime_name order k x,
         Option.map (fun x -> lift k (prime order k x)) def,
-        lift k (prime order k typ))) order
+        lift k (prime order k typ)) ) order
      in
      let env = push_rel decl env in
-     env, (((x_R, Option.map (lift order) def_R, typ_R)::l))::acc) ~init:(env, []) rc
+     env, ((toDecl ((x_R, Option.map (lift order) def_R, typ_R))::l))::acc) ~init:(env, []) rc
   in
   List.flatten ll
 
@@ -565,7 +565,7 @@ and translate_cofix order evd env t =
   let tl_R = Array.mapi (fun n (ft, ft_R, bk, bk_R) ->
      (* bk_R is well-typed in | G, ft|, x_1 : bk_1, x_2 : bk_R *)
      (* we lift it to insert the [nfun * order] letins. *)
-     let ft_R_len = rel_context_length ft_R in
+     let ft_R_len =  Context.Rel.length ft_R in
      let bk_R = liftn (nfun * order) (ft_R_len + order + 1) bk_R in
      let sub = range (fun k ->
                   mkApp (mkRel (ft_R_len + (nfun - n)*order - k ),
@@ -581,7 +581,7 @@ and translate_cofix order evd env t =
   let process_body n =
     let lams, body = decompose_lam_assum bl.(n) in
     let env_lams = push_rel_context lams env_rec in
-    let narg = rel_context_length lams in
+    let narg =  Context.Rel.length lams in
     let body_R = translate order evd env_lams body in
     let (ft, ft_R, bk, bk_R) = ftbk_R.(n) in
     let theta = mkApp (mkRel (nfun - n + narg), Context.Rel.to_extended_vect 0 lams) in
@@ -667,7 +667,7 @@ and translate_fix order evd env t =
   let tl_R = Array.mapi (fun n (ft, ft_R, bk, bk_R) ->
      (* bk_R is well-typed in | G, ft|, x_1 : bk_1, x_2 : bk_R *)
      (* we lift it to insert the [nfun * order] letins. *)
-     let ft_R_len = rel_context_length ft_R in
+     let ft_R_len =  Context.Rel.length ft_R in
      let bk_R = liftn (nfun * order) (ft_R_len + order + 1) bk_R in
      let sub = range (fun k ->
                   mkApp (mkRel (ft_R_len + (nfun - n)*order - k ),
@@ -681,10 +681,10 @@ and translate_fix order evd env t =
   (* n : fix index *)
   let process_body n =
     let lams, body = decompose_lam_assum bl.(n) in
-    let narg = rel_context_length lams in
+    let narg =  Context.Rel.length lams in
     (* rec_arg gives the position of the recursive argument *)
     let rec_arg = narg - (fst ln).(n) in
-    let args = Termops.extended_rel_list 0 lams in
+    let args = Context.Rel.to_extended_list 0 lams in
     let lams_R = translate_rel_context order evd env_rec lams in
     let env_lams = push_rel_context lams env_rec in
 
@@ -780,7 +780,7 @@ and translate_fix order evd env t =
                  mkApp (pcstr,
                         Array.of_list
                          (List.append lifted_i_params
-                           (Termops.extended_rel_list 0 realdecls)))
+                           (Context.Rel.to_extended_list 0 realdecls)))
                in
                let concls = constructors.(i).Inductiveops.cs_concl_realargs in
                assert (Array.length concls = i_nargs);
@@ -940,7 +940,7 @@ and weaken_unused_free_rels env_rc term =
    debug_string [`Fix] (Printf.sprintf "[%s]" (String.concat ";" (List.map string_of_int sub_lst)));
    let sub = List.map mkRel sub_lst in
    let new_env_rc = apply_substitution_rel_context 1 sub [] (List.map toDecl env_rc) in
-   let new_vec = Termops.extended_rel_list 0 env_rc in
+   let new_vec = Context.Rel.to_extended_list 0 (List.map toDecl env_rc) in
    let new_vec = List.filter (fun x -> let v = destRel x in Int.Set.mem v set) new_vec in
    let new_vec = Array.of_list new_vec in
    assert (Array.length new_vec == Context.Rel.nhyps new_env_rc);
@@ -968,8 +968,8 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
     front @ fixs @ back
   in
   let env_rc = Environ.rel_context env in
-  let env_rc = instantiate_fixpoint_in_rel_context env_rc in
-  let gen_path = it_mkProd_or_LetIn (CoqConstants.eq evdr [| typ; source; target|]) env_rc in
+  let env_rc = instantiate_fixpoint_in_rel_context (List.map fromDecl env_rc) in
+  let gen_path = it_mkProd_or_LetIn (CoqConstants.eq evdr [| typ; source; target|]) (List.map toDecl env_rc) in
   debug [`Fix] "gen_path_type" env !evdr gen_path;
   let evd, hole = Evarutil.new_evar Environ.empty_env !evdr gen_path in
   evdr := evd;
