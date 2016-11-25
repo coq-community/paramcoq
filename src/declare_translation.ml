@@ -19,6 +19,7 @@ open Vars
 open Term
 open Constr
 open Libnames
+open Feedback
 
 let ongoing_translation = Summary.ref false ~name:"parametricity ongoing translation"
 let ongoing_translation_opacity = Summary.ref false ~name:"parametricity ongoing translation opacity"
@@ -38,21 +39,21 @@ let parametricity_close_proof () =
   let opacity = if !ongoing_translation_opacity then Vernacexpr.Opaque None else  Vernacexpr.Transparent in
   Pfedit.delete_current_proof ();
   ongoing_translation := false;
-  terminator (Proof_global.Proved (opacity,None,proof_obj))
+  Proof_global.apply_terminator terminator (Proof_global.Proved (opacity,None,proof_obj))
 
 let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
   debug Debug.all "add_definition, typ  = " env evd typ;
   debug_evar_map Debug.all "add_definition, evd  = " evd;
-  let init_tac =
+(*  let init_tac =
     let open Proofview in
     let unsafe = true in
     tclTHEN (Refine.refine ~unsafe term) tactic
-  in
+  in *)
   let open Proof_global in
   let open Vernacexpr in
   ongoing_translation_opacity := opaque;
-  Lemmas.start_proof name ~init_tac kind evd typ hook;
+  Lemmas.start_proof name (*~init_tac*) kind evd typ hook;
   let proof = Proof_global.give_me_the_proof () in
   let is_done = Proof.is_done proof in
   if is_done then
@@ -155,7 +156,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
       debug [`Realizer] (Printf.sprintf "realtyp in realdef (%d), after =" !cpt) env !evdr realtyp;
       (!evdr, term)
     | None -> fun sigma ->
-      (let sigma, real = Evarutil.new_evar env sigma typ_R in
+      (let sigma, real = new_evar_compat env sigma typ_R in
       (sigma, real))
   in
   let kind = Decl_kinds.Global, true, Decl_kinds.DefinitionBody Decl_kinds.Definition in
@@ -294,7 +295,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
                                  ++ str " is an interactive module.")
   | Abstract, _ -> error Pp.(str "Module " ++ (str (Names.ModPath.to_string mp))
                                  ++ str " is an abstract module.")
-  | _ -> Pp.msg_warning Pp.(str "Module " ++ (str (Names.ModPath.to_string mp))
+  | _ -> Feedback.msg_warning Pp.(str "Module " ++ (str (Names.ModPath.to_string mp))
                                  ++ str " is not a fully-instantiated module.");
          continuation ()
 
