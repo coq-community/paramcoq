@@ -22,14 +22,13 @@ open Feedback
 open Constrarg
 open Stdarg
 
-(*
 VERNAC COMMAND EXTEND SetParametricityTactic CLASSIFIED AS SIDEFF
 | [ "Parametricity" "Tactic" ":=" tactic(t) ] -> [
     Relations.set_parametricity_tactic
       (Locality.make_section_locality (Locality.LocalityFixme.consume ()))
       (Tacintern.glob_tactic t) ]
 END
-*)
+
 VERNAC COMMAND EXTEND ShowTable CLASSIFIED AS QUERY
 | [ "Show" "Parametricity" "Table" ] -> [
   Relations.print_relations ()
