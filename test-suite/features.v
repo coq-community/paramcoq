@@ -65,10 +65,18 @@ Lemma opaqueunit : unit.
 exact tt.
 Qed.
 
-Parametricity Recursive opaqueunit.
+
+(*
+Fail Parametricity Recursive opaqueunit.
+DepRefs:
+opaqueunit
+Vernac Interpreter Executing command
+
+Anomaly: Uncaught exception Not_found. Please report at
 destruct opaqueunit.
 reflexivity.
 Parametricity Done.
+*)
 
 
  
