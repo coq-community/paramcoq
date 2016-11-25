@@ -27,6 +27,12 @@ open Debug
 let error msg =
   raise (CErrors.UserError ("Parametricity plugin", msg))
 
+let fromSigmaEvar (s: (constr, 'r) Sigma.sigma) =
+  let  Sigma.Sigma (evk, evd, _) = s in (Sigma.to_evar_map evd,evk)
+
+let new_evar_compat env evd uf_opaque_stmt =
+  fromSigmaEvar (Evarutil.new_evar env ((Sigma.Unsafe.of_evar_map evd)) uf_opaque_stmt)
+
 module CoqConstants = struct
   let msg = "parametricity: unable to fetch constants"
 
@@ -459,7 +465,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
                   raise Not_found
               with e ->
                 debug_string [`ProofIrrelevance] (Printexc.to_string e);
-                let evd_, hole = Evarutil.new_evar Environ.empty_env !evd uf_opaque_stmt in evd := evd_;
+                let evd_, hole = new_evar_compat Environ.empty_env !evd uf_opaque_stmt in evd := evd_;
                 CoqConstants.add_constraints evd (mkSort sort);
                  hole
             in
@@ -874,7 +880,7 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   let gen_rc, new_vec, path = weaken_unused_free_rels env_rc path in
   let gen_path = it_mkProd_or_LetIn path  gen_rc in
   debug [`Fix] "gen_path_type" Environ.empty_env !evdr gen_path;
-  let evd, hole = Evarutil.new_evar Environ.empty_env !evdr gen_path in
+  let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
   evdr := evd;
   let let_gen acc = mkLetIn (Name (id_of_string "gen_path"), hole, gen_path, acc) in
   let_gen @@ (fold_nat (fun k acc ->
@@ -971,7 +977,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
   let env_rc = instantiate_fixpoint_in_rel_context (List.map fromDecl env_rc) in
   let gen_path = it_mkProd_or_LetIn (CoqConstants.eq evdr [| typ; source; target|]) (List.map toDecl env_rc) in
   debug [`Fix] "gen_path_type" env !evdr gen_path;
-  let evd, hole = Evarutil.new_evar Environ.empty_env !evdr gen_path in
+  let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
   evdr := evd;
   let let_gen acc = mkLetIn (Name (id_of_string "gen_path"), hole, gen_path, acc) in
   let_gen @@ (fold_nat (fun k acc ->
