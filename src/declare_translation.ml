@@ -45,15 +45,15 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
   debug Debug.all "add_definition, typ  = " env evd typ;
   debug_evar_map Debug.all "add_definition, evd  = " evd;
-(*  let init_tac =
+  let init_tac =
     let open Proofview in
     let unsafe = true in
-    tclTHEN (Refine.refine ~unsafe term) tactic
-  in *)
+    tclTHEN (Refine.refine ~unsafe { Sigma.run = fun sigma -> let evm = Sigma.to_evar_map sigma in (Sigma.here (snd (term evm)) sigma)}) tactic
+  in
   let open Proof_global in
   let open Vernacexpr in
   ongoing_translation_opacity := opaque;
-  Lemmas.start_proof name (*~init_tac*) kind evd typ hook;
+  Lemmas.start_proof name ~init_tac kind evd typ hook;
   let proof = Proof_global.give_me_the_proof () in
   let is_done = Proof.is_done proof in
   if is_done then
