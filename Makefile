@@ -1,7 +1,7 @@
 .PHONY: coq clean
 
 coq:: Makefile.coq
-	COQBIN=$(COQBIN) COQDEP=$(COQBIN)coqdep $(MAKE) -f Makefile.coq
+	COQBIN=$(COQBIN) COQDEP=$(COQBIN)coqdep ZDEBUG=-bin-annot $(MAKE) -f Makefile.coq
 
 src/paramcoq_mod.ml: src/paramcoq.mllib
 	sed -e "s/\([^ ]\{1,\}\)/let _=Mltop.add_known_module\"\1\" /g" $< > $@
