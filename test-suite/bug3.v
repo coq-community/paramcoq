@@ -63,7 +63,7 @@ lt
 prod
 snd
 subS
-NPeano.Nat.divmod
+Init.Nat.divmod
 modS
 GcdS_F
 Recdef.iter
@@ -99,7 +99,7 @@ RelationClasses.symmetry
 RelationClasses.PER_Transitive
 Morphisms.PER_morphism_obligation_1
 Morphisms.PER_morphism
-Nat.pred
+Init.Nat.pred
 RelationClasses.Equivalence_Symmetric
 RelationClasses.Equivalence_PER
 Nat.pred_succ
@@ -139,7 +139,7 @@ Morphisms.trans_sym_co_inv_impl_morphism
 Basics.flip
 RelationClasses.reflexivity
 comparison
-Nat.compare
+Init.Nat.compare
 or
 or_ind
 Morphisms.trans_co_eq_inv_impl_morphism_obligation_1
@@ -151,7 +151,6 @@ nat_rect
 nat_ind
 f_equal
 f_equal_nat
-Init.Nat.pred
 eq_add_S
 True
 Nat.compare_eq_iff
@@ -190,39 +189,39 @@ lt_S_n
 Acc
 Acc_inv
 positive
-Pos.succ
-Pos.of_succ_nat
+BinPosDef.Pos.succ
+BinPosDef.Pos.of_succ_nat
 Z
-Z.of_nat
+BinIntDef.Z.of_nat
 Decidable.decidable
 Decidable.dec_not_not
-Pos.pred_double
-Z.pred_double
-Z.double
-Z.succ_double
-Z.pos_sub
-Pos.add
-Z.add
+BinPosDef.Pos.pred_double
+BinIntDef.Z.pred_double
+BinIntDef.Z.double
+BinIntDef.Z.succ_double
+BinIntDef.Z.pos_sub
+BinPosDef.Pos.add
+BinIntDef.Z.add
 Morphisms.reflexive_proper
 Z.eq
 Morphisms.reflexive_eq_dom_reflexive
 Z.add_wd
 Z.eq_equiv
-Z.succ
+BinIntDef.Z.succ
 Z.succ_wd
-Z.pred
-Z.opp
-Pos.compare_cont
-Pos.compare
-Pos.mask
-Pos.double_pred_mask
-Pos.double_mask
-Pos.succ_double_mask
-Pos.sub_mask
+BinIntDef.Z.pred
+BinIntDef.Z.opp
+BinPosDef.Pos.compare_cont
+BinPosDef.Pos.compare
+BinPosDef.Pos.mask
+BinPosDef.Pos.double_pred_mask
+BinPosDef.Pos.double_mask
+BinPosDef.Pos.succ_double_mask
+BinPosDef.Pos.sub_mask
 Pos.mask2cmp
-Pos.pred
-Pos.pred_mask
-Pos.sub_mask_carry
+BinPosDef.Pos.pred
+BinPosDef.Pos.pred_mask
+BinPosDef.Pos.sub_mask_carry
 positive_rect
 positive_ind
 Pos.sub_mask_carry_spec
@@ -231,9 +230,6 @@ Pos.compare_cont_spec
 Pos.compare_xI_xO
 Pos.compare_xO_xI
 Pos.compare_sub_mask
-Pos.add_carry
-BinPosDef.Pos.succ
-BinPosDef.Pos.add
 BinPosDef.Pos.add_carry
 Pos.add_carry_spec
 Pos.add_comm
@@ -242,7 +238,6 @@ Pos.add_succ_r
 Pos.add_succ_l
 Pos.add_1_l
 Pos.add_assoc
-BinPosDef.Pos.pred_double
 Pos.succ_pred_double
 Pos.add_xI_pred_double
 Pos.SubMaskSpec
@@ -276,13 +271,12 @@ not_eq_sym
 Pos.add_reg_r
 Pos.add_reg_l
 Pos.add_cancel_l
-BinPosDef.Pos.mask
 Pos.sub_mask_add_diag_l
 Pos.sub_mask_add
 Pos.sub_mask_pos_iff
 Pos.sub_mask_pos'
 Pos.sub_mask_pos
-Pos.sub
+BinPosDef.Pos.sub
 Pos.sub_xI_xI
 Pos.sub_xI_xO
 Pos.sub_xO_xI
@@ -308,11 +302,6 @@ Pos.add_sub_assoc
 Pos.add_lt_mono_r
 Pos.sub_add_distr
 Pos.add_sub
-BinPosDef.Pos.double_mask
-BinPosDef.Pos.succ_double_mask
-BinPosDef.Pos.double_pred_mask
-BinPosDef.Pos.sub_mask
-BinPosDef.Pos.sub
 Pos.sub_sub_distr
 Pos.gt
 Pos.gt_lt_iff
@@ -405,31 +394,26 @@ well_founded
 well_founded_ltof
 lt_wf
 N
-N.sub
+BinNatDef.N.sub
 Init.Nat.sub
-N.of_nat
+BinNatDef.N.of_nat
 Init.Nat.add
-Pos.iter_op
-Pos.to_nat
-N.to_nat
-Pos.of_nat
-BinPosDef.Pos.of_succ_nat
+BinPosDef.Pos.iter_op
+BinPosDef.Pos.to_nat
+BinNatDef.N.to_nat
+BinPosDef.Pos.of_nat
 Pos.of_nat_succ
 Pos.iter_op_succ
 Nat.add_succ_l
 Nat.add_0_l
-Nat.add
 PeanoNat.Nat.add_wd_obligation_1
 Nat.add_wd
 Nat.add_assoc
 Pos2Nat.inj_succ
-BinPosDef.Pos.of_nat
-BinPosDef.Pos.iter_op
-BinPosDef.Pos.to_nat
 Nat2Pos.id
 SuccNat2Pos.id_succ
 Nnat.Nat2N.id
-N.compare
+BinNatDef.N.compare
 Pos2Nat.is_succ
 Pos.le
 Pos.le_1_l
@@ -445,22 +429,21 @@ Pos2Nat.inj_compare
 Nnat.N2Nat.inj_compare
 Nnat.Nat2N.inj_compare
 nat_compare_le
-Z.of_N
+BinIntDef.Z.of_N
 nat_N_Z
-Z.sub
-Z.compare
+BinIntDef.Z.sub
+BinIntDef.Z.compare
 Z.compare_sub
 N.le
 N2Z.inj_compare
 N.compare_antisym
-Z.max
+BinIntDef.Z.max
 N2Z.inj_sub_max
 N2Z.inj_sub
 Nat.sub_0_r
 Pos.sub_mask_neg_iff'
 Pos.sub_mask_neg
 Pos2Nat.inj_add
-Nat.sub
 PeanoNat.Nat.sub_wd_obligation_1
 Nat.sub_wd
 Nat.sub_succ_r
@@ -489,16 +472,13 @@ Nnat.N2Nat.inj_sub
 Pos2Nat.id
 Pos2Nat.inj
 Nnat.N2Nat.id
-BinNatDef.N.of_nat
-BinNatDef.N.to_nat
 Nnat.N2Nat.inj
 Nnat.Nat2N.inj_sub
 Nat2Z.inj_sub
-Pos.mul
-Z.mul
+BinPosDef.Pos.mul
+BinIntDef.Z.mul
 Z.mul_wd
 Z.Private_BootStrap.mul_1_l
-BinPosDef.Pos.mul
 Pos.mul_1_r
 Pos.mul_xI_r
 Pos.mul_xO_r
@@ -605,8 +585,7 @@ inj_minus2
 Z.add_shuffle3
 fast_Zplus_permute
 subS_same
-Nat.divmod
-Nat.modulo
+Init.Nat.modulo
 modS_same
 ge
 ex_ind
@@ -847,7 +826,147 @@ Coq__o__Init__o__Logic__o__f_equal_R is defined
 'Coq__o__Init__o__Logic__o__f_equal_R' is now a registered translation.
 Coq__o__Init__o__Peano__o__f_equal_nat_R is defined
 'Coq__o__Init__o__Peano__o__f_equal_nat_R' is now a registered translation.
-
-Error: Coq__o__Init__o__Nat__o__pred_R already exists.
+Coq__o__Init__o__Peano__o__eq_add_S_R is defined
+'Coq__o__Init__o__Peano__o__eq_add_S_R' is now a registered translation.
+True_R is defined
+True_R_rect is defined
+True_R_ind is defined
+True_R_rec is defined
+Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_eq_iff_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_eq_iff_R' is now a registered translation.
+Coq__o__Init__o__Peano__o__le_0_n_R is defined
+'Coq__o__Init__o__Peano__o__le_0_n_R' is now a registered translation.
+Coq__o__Init__o__Peano__o__le_ind_R is defined
+'Coq__o__Init__o__Peano__o__le_ind_R' is now a registered translation.
+Coq__o__Init__o__Peano__o__le_pred_R is defined
+'Coq__o__Init__o__Peano__o__le_pred_R' is now a registered translation.
+Coq__o__Init__o__Peano__o__le_S_n_R is defined
+'Coq__o__Init__o__Peano__o__le_S_n_R' is now a registered translation.
+Coq__o__Init__o__Peano__o__le_n_S_R is defined
+'Coq__o__Init__o__Peano__o__le_n_S_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_le_iff_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_le_iff_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_lt_iff_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_lt_iff_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_eq_cases_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_eq_cases_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__le_refl_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__le_refl_R' is now a registered translation.
+Coq__o__Classes__o__Morphisms__o__iff_flip_impl_subrelation_R is defined
+'Coq__o__Classes__o__Morphisms__o__iff_flip_impl_subrelation_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_succ_r_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_succ_r_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_succ_diag_r_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_succ_diag_r_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_wd_obligation_1_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_wd_obligation_1_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_wd_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_wd_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_refl_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__compare_refl_R' is now a registered translation.
+Coq__o__Classes__o__Morphisms_Prop__o__not_iff_morphism_obligation_1_R is defined
+'Coq__o__Classes__o__Morphisms_Prop__o__not_iff_morphism_obligation_1_R' is now a registered translation.
+Coq__o__Classes__o__Morphisms_Prop__o__not_iff_morphism_R is defined
+'Coq__o__Classes__o__Morphisms_Prop__o__not_iff_morphism_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_irrefl_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_irrefl_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__neq_succ_diag_l_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__neq_succ_diag_l_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_le_incl_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__lt_le_incl_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__nlt_succ_diag_l_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__nlt_succ_diag_l_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__nle_succ_diag_l_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__nle_succ_diag_l_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__bi_induction_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__bi_induction_R' is now a registered translation.
+Coq__o__Classes__o__Morphisms_Prop__o__iff_iff_iff_impl_morphism_obligation_1_R is defined
+'Coq__o__Classes__o__Morphisms_Prop__o__iff_iff_iff_impl_morphism_obligation_1_R' is now a registered translation.
+Coq__o__Classes__o__Morphisms_Prop__o__iff_iff_iff_impl_morphism_R is defined
+'Coq__o__Classes__o__Morphisms_Prop__o__iff_iff_iff_impl_morphism_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__central_induction_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__central_induction_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__le_wd_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__le_wd_R' is now a registered translation.
+Coq__o__Init__o__Logic__o__or_iff_compat_r_R is defined
+'Coq__o__Init__o__Logic__o__or_iff_compat_r_R' is now a registered translation.
+Coq__o__Init__o__Logic__o__or_cancel_r_R is defined
+'Coq__o__Init__o__Logic__o__or_cancel_r_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__le_succ_l_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__le_succ_l_R' is now a registered translation.
+Coq__o__Arith__o__PeanoNat__o__Nat__o__succ_lt_mono_R is defined
+'Coq__o__Arith__o__PeanoNat__o__Nat__o__succ_lt_mono_R' is now a registered translation.
+Coq__o__Arith__o__Lt__o__lt_S_n_R is defined
+'Coq__o__Arith__o__Lt__o__lt_S_n_R' is now a registered translation.
+Acc_R is defined
+Acc_R_rect is defined
+Acc_R_ind is defined
+Acc_R_rec is defined
+Coq__o__Init__o__Wf__o__Acc_inv_R is defined
+'Coq__o__Init__o__Wf__o__Acc_inv_R' is now a registered translation.
+positive_R is defined
+positive_R_rect is defined
+positive_R_ind is defined
+positive_R_rec is defined
+Coq__o__PArith__o__BinPosDef__o__Pos__o__succ_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__succ_R' is now a registered translation.
+Coq__o__PArith__o__BinPosDef__o__Pos__o__of_succ_nat_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__of_succ_nat_R' is now a registered translation.
+Z_R is defined
+Z_R_rect is defined
+Z_R_ind is defined
+Z_R_rec is defined
+Coq__o__ZArith__o__BinIntDef__o__Z__o__of_nat_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__of_nat_R' is now a registered translation.
+Coq__o__Logic__o__Decidable__o__decidable_R is defined
+'Coq__o__Logic__o__Decidable__o__decidable_R' is now a registered translation.
+Coq__o__Logic__o__Decidable__o__dec_not_not_R is defined
+'Coq__o__Logic__o__Decidable__o__dec_not_not_R' is now a registered translation.
+Coq__o__PArith__o__BinPosDef__o__Pos__o__pred_double_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__pred_double_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__pred_double_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__pred_double_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__double_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__double_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__succ_double_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__succ_double_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__pos_sub_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__pos_sub_R' is now a registered translation.
+Coq__o__PArith__o__BinPosDef__o__Pos__o__add_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__add_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__add_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__add_R' is now a registered translation.
+Coq__o__Classes__o__Morphisms__o__reflexive_proper_R is defined
+'Coq__o__Classes__o__Morphisms__o__reflexive_proper_R' is now a registered translation.
+Coq__o__ZArith__o__BinInt__o__Z__o__eq_R is defined
+'Coq__o__ZArith__o__BinInt__o__Z__o__eq_R' is now a registered translation.
+Coq__o__Classes__o__Morphisms__o__reflexive_eq_dom_reflexive_R is defined
+'Coq__o__Classes__o__Morphisms__o__reflexive_eq_dom_reflexive_R' is now a registered translation.
+Coq__o__ZArith__o__BinInt__o__Z__o__add_wd_R is defined
+'Coq__o__ZArith__o__BinInt__o__Z__o__add_wd_R' is now a registered translation.
+Coq__o__ZArith__o__BinInt__o__Z__o__eq_equiv_R is defined
+'Coq__o__ZArith__o__BinInt__o__Z__o__eq_equiv_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__succ_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__succ_R' is now a registered translation.
+Coq__o__ZArith__o__BinInt__o__Z__o__succ_wd_R is defined
+'Coq__o__ZArith__o__BinInt__o__Z__o__succ_wd_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__pred_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__pred_R' is now a registered translation.
+Coq__o__ZArith__o__BinIntDef__o__Z__o__opp_R is defined
+'Coq__o__ZArith__o__BinIntDef__o__Z__o__opp_R' is now a registered translation.
+Coq__o__PArith__o__BinPosDef__o__Pos__o__compare_cont_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__compare_cont_R' is now a registered translation.
+Coq__o__PArith__o__BinPosDef__o__Pos__o__compare_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__compare_R' is now a registered translation.
+mask_R is defined
+mask_R_rect is defined
+mask_R_ind is defined
+mask_R_rec is defined
+Coq__o__PArith__o__BinPosDef__o__Pos__o__double_pred_mask_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__double_pred_mask_R' is now a registered translation.
+Coq__o__PArith__o__BinPosDef__o__Pos__o__double_mask_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__double_mask_R' is now a registered translation.
+Coq__o__PArith__o__BinPosDef__o__Pos__o__succ_double_mask_R is defined
+'Coq__o__PArith__o__BinPosDef__o__Pos__o__succ_double_mask_R' is now a registered translation.
 
 *)
