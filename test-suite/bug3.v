@@ -969,4 +969,6 @@ Coq__o__PArith__o__BinPosDef__o__Pos__o__double_mask_R is defined
 Coq__o__PArith__o__BinPosDef__o__Pos__o__succ_double_mask_R is defined
 'Coq__o__PArith__o__BinPosDef__o__Pos__o__succ_double_mask_R' is now a registered translation.
 
+Anomaly: Uncaught exception Not_found. Please report at
+http://coq.inria.fr/bugs/.
 *)
