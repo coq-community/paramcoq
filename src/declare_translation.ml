@@ -20,6 +20,7 @@ open Term
 open Constr
 open Libnames
 open Feedback
+open String
 
 let ongoing_translation = Summary.ref false ~name:"parametricity ongoing translation"
 let ongoing_translation_opacity = Summary.ref false ~name:"parametricity ongoing translation opacity"
@@ -303,18 +304,28 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
 let command_variable ?(continuation = default_continuation) arity variable names =
   error (Pp.str "Cannot translate an axiom nor a variable. Please use the 'Parametricity Realizer' command.")
 
+let translateFullName arity (constant : Names.constant) : string =
+  let nstr =
+    (translate_string arity
+     @@ Names.Label.to_string
+     @@ Names.Constant.label
+     @@ constant)in 
+  let pstr =
+    (Names.ModPath.to_string
+     @@ Names.modpath
+     @@ Names.canonical_con
+     @@ constant) in
+  let plstr = Str.split (Str.regexp ("\.")) pstr in
+  (String.concat "__o__" (plstr@[nstr]))
+
+
 let command_constant ?(continuation = default_continuation) arity constant names =
   let poly, opaque =
     let cb = Global.lookup_constant constant in
     Declarations.(cb.const_polymorphic, match cb.const_body with Def _ -> false | _ -> true)
   in
   let name = match names with
-      | None ->
-             Names.id_of_string
-          @@ translate_string arity
-          @@ Names.Label.to_string
-          @@ Names.Constant.label
-          @@ constant
+      | None -> Names.id_of_string (translateFullName arity constant)
       | Some name -> name
   in
   let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
