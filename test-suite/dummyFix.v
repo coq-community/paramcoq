@@ -22,7 +22,7 @@ Definition isTrueP (A:Prop) := (or_to_boolp (exm A)).
 Definition nonParam (A : Prop)  (p : A = A) : boolP := isTrueP A.
 
 (* because zero cannot be unfolded, it seems safe to assume the following *)
-Axiom zeroOpaque : ~~(zero = nonParam).
+Axiom zeroOpaque :(zero = nonParam).
 
 
 (*
@@ -82,10 +82,11 @@ Proof using.
   destruct Hc; auto.
 Qed.
 
-Lemma boolP_R_eq : forall a b:boolP, boolP_R a b -> a=b.
+Lemma boolP_R_eq : forall a b:boolP, boolP_R a b <-> a=b.
 Proof using.
-  intros  ? ? Hc.
-  inversion Hc; reflexivity.
+  intros  ? ?. split; intros Hc.
+- inversion Hc; reflexivity.
+- subst. destruct b; constructor.
 Qed.
 
 (* PI stands for proof irrelevance *)
@@ -112,16 +113,22 @@ Qed.
 
 Locate "or".
 
+(* because of https://coq.inria.fr/library/Coq.Logic.ClassicalFacts.html#lab46,
+this is not very interesting -- PI is already provable from LEM *)
 
 Lemma zero_param_implies_PR: 
 (forall (A₁ A₂ : Prop) (A_R : A₁ -> A₂ -> Prop) (p₁ : A₁ = A₁) (p₂ : A₂ = A₂),
 eq_R Prop Prop (fun H1 H2 : Type => H1 -> H2 -> Type) A₁ A₂ A_R A₁ A₂ A_R p₁
-  p₂ -> (zero A₁ p₁) = (zero A₂ p₂)) -> False.
+  p₂ -> (zero A₁ p₁) = (zero A₂ p₂)) -> (trueP = falseP).
 Proof using.
   intros Hc.
-  apply zeroOpaque.
-  intros Hcc.
-  apply exmNotParam.
-  intros. unfold nonParam in Hcc.
-  simpl in Hcc.
+  apply isTrueP_param_implies_PI.
+  intros.
+  change ((isTrueP A₁)) with (nonParam A₁ eq_refl).
+  change ((isTrueP A₂)) with (nonParam A₂ eq_refl).
+  apply boolP_R_eq.
+  rewrite <- zeroOpaque.
+  apply Hc with (A_R := fun _ _ => True).
+  simpl. constructor.
+Qed.
 
