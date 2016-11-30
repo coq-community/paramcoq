@@ -1,19 +1,19 @@
-Require Import Coq.Logic.ClassicalFacts.
 
 (* the only way to compute zero is for p to become canonical.
 The only canonical member of A=A is eq_refl.
 However, it is impossible to that p is propositionally equal to eq_refl.
 In particular the univalence axiom allows for non-refl proofs. *)
-Fixpoint zero (A : Set)  (p : A = A) {struct p} : bool := true.
+Fixpoint zero (A : Set)  (p : A = A) {struct p} : nat := 0.
 
 
-Axiom strong_exm : Set -> bool.
-Axiom strong_exm_true : strong_exm True = true.
-Axiom strong_exm_false : strong_exm False = false.
+(* although this axiom breaks canonicity, it is believed to be consistent *)
+Axiom strong_exm : Set -> nat.
+Axiom strong_exm_true : strong_exm True = 0.
+Axiom strong_exm_false : strong_exm False = 1.
 
 
 (* same type as [zero] above, but provably non parametric *)
-Definition nonParam (A : Set)  (p : A = A) : bool := strong_exm A.
+Definition nonParam (A : Set)  (p : A = A) : nat := strong_exm A.
 
 (* because zero cannot be unfolded, it seems safe to assume the following *)
 Axiom zeroOpaque :(forall x, zero x = nonParam x).
