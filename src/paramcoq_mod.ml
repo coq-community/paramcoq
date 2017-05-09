@@ -1,0 +1,7 @@
+let _=Mltop.add_known_module"Debug" 
+let _=Mltop.add_known_module"Relations" 
+let _=Mltop.add_known_module"Parametricity" 
+let _=Mltop.add_known_module"Declare_translation" 
+let _=Mltop.add_known_module"Abstraction" 
+let _=Mltop.add_known_module"Paramcoq_mod" 
+let _=Mltop.add_known_module"paramcoq"
