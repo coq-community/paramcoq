@@ -5,7 +5,7 @@ But is useable enough to "translate" a large chunck of standard library.
 Compilation 
 ===========
 
-The plugin currently works with Coq 8.6.
+The plugin is believed to work with Coq 8.7.
 One way to test the plugin is to follow the following steps:
 
 * Retrieve the plugin and compile it:
