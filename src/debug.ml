@@ -21,7 +21,6 @@ open Context
 open EConstr
 open Pp
 
-
 let toCDecl (old: Names.name * ((Constr.constr) option) * Constr.constr) : Context.Rel.Declaration.t =
   let (name,value,typ) = old in
   match value with
@@ -70,7 +69,7 @@ let set_debug_mode =
       Goptions.optwrite = (:=) debug_mode }
 
 let debug_rename_env env evd =
-  let rc = rel_context env in
+  let rc = EConstr.rel_context env in
   let env = Environ.reset_context env in
   let rc = Namegen.name_context env evd rc in
   let env = push_rel_context rc env in
@@ -143,9 +142,9 @@ let not_implemented ?(reason = "no reason") env evd t =
   failwith "not_implemented"
 
 module SortSet = Set.Make(Sorts)
-let rec sorts accu t = match Constr.kind t with
+let rec sorts accu t = match Term.kind_of_term t with
  | Sort t -> SortSet.add t accu
- | _ -> Constr.fold sorts accu t
+ | _ -> Term.fold_constr sorts accu t
 
 let debug_mutual_inductive_entry =
   let open Entries in

@@ -1,4 +1,4 @@
-FLG -rectypes -thread -w @1..50@59-4-44 -safe-string
+FLG -rectypes -thread -w @1..50@59-4-44 -safe-string -open API
 
 S src
 B src
