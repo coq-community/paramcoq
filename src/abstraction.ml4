@@ -16,11 +16,13 @@
 (*i camlp4deps: "src/parametricity.cmo" "src/declare_translation.cmo" i*)
 
 DECLARE PLUGIN "parametricity"
+
+open Ltac_plugin
+open Feedback
+open Stdarg
+open Tacarg
 open Parametricity
 open Declare_translation
-open Feedback
-open Constrarg
-open Stdarg
 
 VERNAC COMMAND EXTEND SetParametricityTactic CLASSIFIED AS SIDEFF
 | [ "Parametricity" "Tactic" ":=" tactic(t) ] -> [

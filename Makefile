@@ -3,7 +3,7 @@
 coq:: Makefile.coq
 	$(MAKE) -f Makefile.coq
 
-src/paramcoq_mod.ml: src/paramcoq.mllib
+src/paramcoq_mod.ml: src/paramcoq.mlpack
 	sed -e "s/\([^ ]\{1,\}\)/let _=Mltop.add_known_module\"\1\" /g" $< > $@
 	echo "let _=Mltop.add_known_module\"paramcoq\"" >> $@
 

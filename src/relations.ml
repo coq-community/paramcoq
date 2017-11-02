@@ -14,12 +14,11 @@
 (**************************************************************************)
 
 
-open Term
+open Ltac_plugin
 open Names
+open Term
 open Globnames
 open Libobject
-
-
 
 let (set_parametricity_tactic, get_parametricity_tactic, print_parametricity_tactic) = 
     Tactic_option.declare_tactic_option "Parametricity tactic"
