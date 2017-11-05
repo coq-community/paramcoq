@@ -23,7 +23,7 @@ open EConstr
 open Vars
 open Debug
 
-[@@@ocaml.warning "-27-40-42"]
+[@@@ocaml.warning "-3-27-40-42"]
 
 let error msg = CErrors.user_err ~hdr:"Parametricity plugin" msg
 
@@ -36,7 +36,7 @@ module CoqConstants = struct
   let add_constraints evdref univ =
     let env = Global.env () in
     let extract_type_sort poly_ref =
-      let poly_ref = Evarutil.e_new_global evdref (delayed_force poly_ref) in
+      let poly_ref = Evarutil.e_new_global evdref poly_ref in
       let ref_type = Retyping.get_type_of env !evdref poly_ref in
       let ref_sort =
         let _, a, _ = destProd !evdref ref_type in
@@ -45,7 +45,7 @@ module CoqConstants = struct
       ignore (Evarconv.e_cumul env evdref univ ref_sort)
     in
     let extract_pred_sort poly_ref =
-      let poly_ref = Evarutil.e_new_global evdref (delayed_force poly_ref) in
+      let poly_ref = Evarutil.e_new_global evdref poly_ref in
       let ref_type = Retyping.get_type_of env !evdref poly_ref in
       let ref_sort =
         let _, _, typ = destProd !evdref ref_type in
@@ -55,20 +55,29 @@ module CoqConstants = struct
       in
       ignore (Evarconv.e_cumul env evdref univ ref_sort)
     in
-    List.iter extract_type_sort [Program.coq_eq_ind; Program.coq_eq_refl; Program.coq_eq_rect];
-    extract_pred_sort Program.coq_eq_rect
+    let open Coqlib in
+    let eq_r = build_coq_eq_data () in
+    let eq_rect = coq_reference "paramcoq" ["Init"; "Logic"] "eq_rect" in
+    List.iter extract_type_sort [eq_r.ind; eq_r.refl; eq_rect];
+    extract_pred_sort eq_rect
+
+  let param_papp evdref r args =
+    let open EConstr in
+    mkApp (Evarutil.e_new_global evdref r, args)
 
   let eq evdref args =
-    Program.papp evdref Program.coq_eq_ind args
+    param_papp evdref (Coqlib.build_coq_eq_data ()).ind args
 
   let eq_refl evdref args =
-    Program.papp evdref Program.coq_eq_refl args
+    param_papp evdref (Coqlib.build_coq_eq_data ()).refl args
 
   let transport evdref args =
-    Program.papp evdref Program.coq_eq_rect args
+    param_papp evdref
+      (Coqlib.coq_reference "paramcoq" ["Init"; "Logic"] "eq_rect")
+      args
 
   let proof_irrelevance evdref args =
-    Program.papp evdref (fun () -> Coqlib.coq_reference msg ["Logic"; "ProofIrrelevance"] "proof_irrelevance") args
+    param_papp evdref Coqlib.(coq_reference msg ["Logic"; "ProofIrrelevance"] "proof_irrelevance") args
 end
 
 let program_mode = ref false
@@ -241,10 +250,6 @@ let substnl_rel_context subst n sign =
   in List.rev (aux n (List.rev sign))
 
 let substl_rel_context subst = substnl_rel_context subst 0
-
-
-(* A variant of mkApp that reduces redexes. *)
-let mkBetaApp (f, v) = Reduction.beta_appvect f v
 
 (* If [c] is well-formed type in env [G], then [generalize G c] returns [forall G.c]. *)
 let generalize_env (env : Environ.env) (init : types) =
@@ -1062,7 +1067,7 @@ let rec translate_mind_body name order evdr env kn b inst =
            Inductive.constrained_type_of_inductive env ((b, ind), inst)
         in
         let env = push_rel (toDecl (Names.Name typename, None, (of_constr full_arity))) env in
-        let env = add_constraints cst env in
+        let env = Environ.add_constraints cst env in
         env
       ) env (Array.to_list b.mind_packets)
     in
@@ -1081,7 +1086,7 @@ let rec translate_mind_body name order evdr env kn b inst =
       (Array.to_list b.mind_packets)
   in
   debug_evar_map [`Inductive] "translate_mind, evd = \n" !evdr;
-  let ctx = Evd.universe_context !evdr in
+  let _, ctx = Evd.universe_context ~names:[] ~extensible:false !evdr in
   let res = {
     mind_entry_record = None;
     mind_entry_finite = b.mind_finite;
@@ -1091,10 +1096,10 @@ let rec translate_mind_body name order evdr env kn b inst =
     (* mind_entry_polymorphic = b.mind_polymorphic; *)
     mind_entry_universes =
       (match b.mind_universes with
-       | Monomorphic_ind _ -> Monomorphic_ind_entry (snd ctx)
-       | Polymorphic_ind _ -> Polymorphic_ind_entry (snd ctx)
+       | Monomorphic_ind _ -> Monomorphic_ind_entry ctx
+       | Polymorphic_ind _ -> Polymorphic_ind_entry ctx
        (* XXX We cannot do this yet *)
-       | Cumulative_ind _ -> Polymorphic_ind_entry (snd ctx)
+       | Cumulative_ind _ -> Polymorphic_ind_entry ctx
        (* Cumulative_ind_entry (snd ctx) *)
       );
     mind_entry_private = b.mind_private;

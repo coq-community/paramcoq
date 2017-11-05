@@ -6,6 +6,8 @@
 (*     Chantal Keller                                                     *)
 (*     Marc Lasson                                                        *)
 (*                                                                        *)
+(*     Modified by Abhishek Anand                                         *)
+(*                                                                        *)
 (*     INRIA - École Polytechnique - ÉNS de Lyon                          *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the GNU Lesser General   *)
@@ -22,7 +24,7 @@ open Debug
 open Parametricity
 
 [@@@ocaml.warning "-27-40-42-48"]
-
+let error = CErrors.user_err
 let ongoing_translation = Summary.ref false ~name:"parametricity ongoing translation"
 let ongoing_translation_opacity = Summary.ref false ~name:"parametricity ongoing translation opacity"
 let check_nothing_ongoing () =
@@ -38,7 +40,7 @@ let default_continuation = ignore
 
 let parametricity_close_proof () =
   let proof_obj, terminator = Proof_global.close_proof ~keep_body_ucst_separate:false (fun x -> x) in
-  let opacity = if !ongoing_translation_opacity then Vernacexpr.Opaque None else  Vernacexpr.Transparent in
+  let opacity = if !ongoing_translation_opacity then Vernacexpr.Opaque else Vernacexpr.Transparent in
   Pfedit.delete_current_proof ();
   ongoing_translation := false;
   Proof_global.apply_terminator terminator (Proof_global.Proved (opacity,None,proof_obj))
@@ -113,9 +115,9 @@ let declare_inductive name ?(continuation = default_continuation) arity evd env 
   debug_string [`Inductive] ("Translating mind body ... done.");
   debug_evar_map [`Inductive] "evar_map inductive " !evd;
   let size = Declarations.(Array.length mut_body.mind_packets) in
-  let mut_ind_R = Command.declare_mutual_inductive_with_eliminations translation_entry [] in
+  let mut_ind_R = Command.declare_mutual_inductive_with_eliminations translation_entry [] [] in
   for k = 0 to size-1 do
-    Relations.declare_inductive_relation arity (mut_ind, k) (mut_ind_R [], k)
+    Relations.declare_inductive_relation arity (mut_ind, k) (mut_ind_R, k)
   done;
   continuation ()
 
