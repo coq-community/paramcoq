@@ -309,22 +309,20 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
 let command_variable ?(continuation = default_continuation) arity variable names =
   error (Pp.str "Cannot translate an axiom nor a variable. Please use the 'Parametricity Realizer' command.")
 
-let translateFullName ~fullname arity (constant : Names.constant) : string =
+let translateFullName ~fullname arity (kername : Names.KerName.t) : string =
   let nstr =
     (translate_string arity
      @@ Names.Label.to_string
-     @@ Names.Constant.label
-     @@ constant)in 
+     @@ Names.KerName.label
+     @@ kername) in 
   let pstr =
     (Names.ModPath.to_string
      @@ Names.modpath
-     @@ Names.canonical_con
-     @@ constant) in
+     @@ kername) in
   let plstr = Str.split (Str.regexp ("\.")) pstr in
   if fullname then
     (String.concat "_o_" (plstr@[nstr]))
   else nstr
-
 
 let command_constant ?(continuation = default_continuation) ~fullname arity constant names =
   let poly, opaque =
@@ -337,7 +335,10 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
     (match cb.const_body with Def _ -> false | _ -> true)
   in
   let name = match names with
-      | None -> Names.id_of_string (translateFullName ~fullname arity constant)
+      | None -> Names.id_of_string
+                @@ translateFullName ~fullname arity
+                @@ Names.Constant.canonical
+                @@ constant
       | Some name -> name
   in
   let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
@@ -348,7 +349,7 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
   let constr = mkConstU (fst pconst, EInstance.make @@ snd pconst) in
   declare_abstraction ~continuation ~opaque ~kind arity (ref evd) env constr name
 
-let command_inductive ?(continuation = default_continuation) arity inductive names =
+let command_inductive ?(continuation = default_continuation) ~fullname arity inductive names =
   let (evd, env) = Lemmas.get_current_context () in
   let evd, pind =
     Evd.(with_context_set univ_rigid evd (Universes.fresh_inductive_instance env inductive))
@@ -356,16 +357,14 @@ let command_inductive ?(continuation = default_continuation) arity inductive nam
   let name = match names with
       | None ->
              Names.id_of_string
-          @@ translate_string arity
-          @@ Names.Label.to_string
-          @@ Names.MutInd.label
+          @@ translateFullName ~fullname arity
+          @@ Names.MutInd.canonical
           @@ fst
 	  @@ fst
 	  @@ pind
       | Some name -> name
   in
   declare_inductive name ~continuation arity (ref evd) env pind
-
 
 let command_constructor ?(continuation = default_continuation) arity gref names =
   let open Pp in
@@ -382,7 +381,7 @@ let command_reference ?(continuation = default_continuation) ?(fullname = false)
    | ConstRef constant ->
      command_constant ~continuation ~fullname arity constant names
    | IndRef inductive ->
-     command_inductive ~continuation arity inductive names
+     command_inductive ~continuation ~fullname arity inductive names
    | ConstructRef constructor ->
      command_constructor ~continuation arity gref names
 
