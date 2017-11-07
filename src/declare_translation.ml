@@ -386,7 +386,7 @@ let command_reference ?(continuation = default_continuation) ?(fullname = false)
    | ConstructRef constructor ->
      command_constructor ~continuation arity gref names
 
-let command_reference_recursive ?(continuation = default_continuation) arity gref =
+let command_reference_recursive ?(continuation = default_continuation) ?(fullname = false) arity gref =
   let open Globnames in
   let gref= Globnames.canonical_gr gref in
   let label = Names.Label.of_id (Nametab.basename_of_global gref) in
@@ -416,7 +416,7 @@ let command_reference_recursive ?(continuation = default_continuation) arity gre
   (* DEBUG: *)
   let open Pp in msg_info  (str "DepRefs:");
   List.iter (fun x -> let open Pp in msg_info (Printer.pr_global x)) dep_refs;
-  list_continuation continuation (fun continuation gref -> command_reference ~continuation arity gref None) dep_refs ()
+  list_continuation continuation (fun continuation gref -> command_reference ~continuation ~fullname arity gref None) dep_refs ()
 
 let translate_command arity c name =
   if !ongoing_translation then error (Pp.str "On going translation.");

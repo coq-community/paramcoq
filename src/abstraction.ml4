@@ -88,6 +88,14 @@ VERNAC COMMAND EXTEND AbstractionRecursive CLASSIFIED AS SIDEFF
   [
     command_reference_recursive arity (Constrintern.intern_reference c)
   ]
+| [ "Parametricity" "Recursive" reference(c) "qualified" ] ->
+  [
+    command_reference_recursive ~fullname:true default_arity (Constrintern.intern_reference c)
+  ]
+| [ "Parametricity" "Recursive" reference(c) "arity" integer(arity) "qualified" ] ->
+  [
+    command_reference_recursive ~fullname:true arity (Constrintern.intern_reference c)
+  ]
 END
 
 VERNAC COMMAND EXTEND Abstraction CLASSIFIED AS SIDEFF
