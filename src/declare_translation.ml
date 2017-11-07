@@ -309,7 +309,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
 let command_variable ?(continuation = default_continuation) arity variable names =
   error (Pp.str "Cannot translate an axiom nor a variable. Please use the 'Parametricity Realizer' command.")
 
-let translateFullName arity (constant : Names.constant) : string =
+let translateFullName ~fullname arity (constant : Names.constant) : string =
   let nstr =
     (translate_string arity
      @@ Names.Label.to_string
@@ -321,10 +321,12 @@ let translateFullName arity (constant : Names.constant) : string =
      @@ Names.canonical_con
      @@ constant) in
   let plstr = Str.split (Str.regexp ("\.")) pstr in
-  (String.concat "_o_" (plstr@[nstr]))
+  if fullname then
+    (String.concat "_o_" (plstr@[nstr]))
+  else nstr
 
 
-let command_constant ?(continuation = default_continuation) arity constant names =
+let command_constant ?(continuation = default_continuation) ~fullname arity constant names =
   let poly, opaque =
     let cb = Global.lookup_constant constant in
     let open Declarations in
@@ -335,7 +337,7 @@ let command_constant ?(continuation = default_continuation) arity constant names
     (match cb.const_body with Def _ -> false | _ -> true)
   in
   let name = match names with
-      | None -> Names.id_of_string (translateFullName arity constant)
+      | None -> Names.id_of_string (translateFullName ~fullname arity constant)
       | Some name -> name
   in
   let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
@@ -371,14 +373,14 @@ let command_constructor ?(continuation = default_continuation) arity gref names 
         ++ (Printer.pr_global gref)
         ++ (str "' is a constructor. To generate its parametric translation, please translate its inductive first."))
 
-let command_reference ?(continuation = default_continuation) arity gref names =
+let command_reference ?(continuation = default_continuation) ?(fullname = false) arity gref names =
    check_nothing_ongoing ();
    let open Globnames in
    match gref with
    | VarRef variable ->
      command_variable ~continuation arity variable names
    | ConstRef constant ->
-     command_constant ~continuation arity constant names
+     command_constant ~continuation ~fullname arity constant names
    | IndRef inductive ->
      command_inductive ~continuation arity inductive names
    | ConstructRef constructor ->
