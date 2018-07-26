@@ -41,7 +41,7 @@ let default_continuation = ignore
 let parametricity_close_proof () =
   let proof_obj, terminator = Proof_global.close_proof ~keep_body_ucst_separate:false (fun x -> x) in
   let opacity = if !ongoing_translation_opacity then Vernacexpr.Opaque else Vernacexpr.Transparent in
-  Pfedit.delete_current_proof ();
+  Proof_global.discard_current ();
   ongoing_translation := false;
   Proof_global.apply_terminator terminator (Proof_global.Proved (opacity,None,proof_obj))
 
@@ -115,14 +115,15 @@ let declare_inductive name ?(continuation = default_continuation) arity evd env 
   debug_string [`Inductive] ("Translating mind body ... done.");
   debug_evar_map [`Inductive] "evar_map inductive " !evd;
   let size = Declarations.(Array.length mut_body.mind_packets) in
-  let mut_ind_R = Command.declare_mutual_inductive_with_eliminations translation_entry [] [] in
+  let mut_ind_R = ComInductive.declare_mutual_inductive_with_eliminations translation_entry
+                  Names.Id.Map.empty [] in
   for k = 0 to size-1 do
     Relations.declare_inductive_relation arity (mut_ind, k) (mut_ind_R, k)
   done;
   continuation ()
 
 let translate_inductive_command sigma arity c name =
-  let (sigma, env) = Lemmas.get_current_context () in
+  let (sigma, env) = Pfedit.get_current_context () in
   let (sigma, c) = Constrintern.interp_open_constr env sigma c in
   let (ind, _) as pind, _ =
     try
@@ -183,7 +184,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
   add_definition ~tactic  ~opaque:false ~kind ~hook name env sigma real typ_R
 
 let realizer_command arity name var real =
-  let (sigma, env) = Lemmas.get_current_context () in
+  let (sigma, env) = Pfedit.get_current_context () in
   let (sigma, var) = Constrintern.interp_open_constr env sigma var in
   Obligations.check_evars env sigma;
   let real = fun sigma -> Constrintern.interp_open_constr env sigma real in
@@ -194,11 +195,11 @@ let rec list_continuation final f l _ = match l with [] -> final ()
 
 let rec translate_module_command ?name arity r  =
   check_nothing_ongoing ();
-  let (loc, qid) = qualid_of_reference r in
+  let qid = CAst.with_val (fun x -> x) (qualid_of_reference r) in
   try
     let globdir = Nametab.locate_dir qid in
     match globdir with
-    | DirModule (_, (mp, _)) ->
+    | DirModule { obj_mp = mp } ->
        let mb = Global.lookup_module mp in
        declare_module ?name arity mb
     | _ -> assert false

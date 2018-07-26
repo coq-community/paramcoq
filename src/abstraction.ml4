@@ -27,7 +27,7 @@ open Declare_translation
 VERNAC COMMAND EXTEND SetParametricityTactic CLASSIFIED AS SIDEFF
 | [ "Parametricity" "Tactic" ":=" tactic(t) ] -> [
     Relations.set_parametricity_tactic
-      (Locality.make_section_locality (Locality.LocalityFixme.consume ()))
+      (Locality.make_section_locality atts.Vernacinterp.locality)
       (Tacintern.glob_tactic t) ]
 END
 
