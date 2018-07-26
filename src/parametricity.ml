@@ -13,12 +13,10 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Ltac_plugin
 open Util
 open Names
 open Vars
 open Environ
-open Context
 open EConstr
 open Vars
 open Debug
@@ -156,7 +154,7 @@ let prop_or_type _env _evdr s = s
  * c[x_index/x,y_index/y, z_index/z] and is well-defined in:
  *    x_1, x_2, ...,x_order, x_R, y_1, y_2, ..., y_order, y_R, z1, z_2, ..., z_order, z_R
  * *)
-let rec prime sigma order index c =
+let prime sigma order index c =
   let rec aux depth c = match kind sigma c with
     | Rel i ->
         if i <= depth then c else mkRel (depth + (order + 1) * (i - depth)  - index)
@@ -461,10 +459,10 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
       let cb = lookup_constant kn env in
       Declarations.(match cb.const_body with
         | Def _ ->
-            let (value, constraints) = constant_value env (kn,names) in
+            let (value, _, constraints) = constant_value_and_type env (kn,names) in
             let evd' = Evd.add_constraints !evd constraints in
             evd := evd';
-            translate order evd env (of_constr value)
+            translate order evd env (of_constr (Option.get value))
         | OpaqueDef op ->
             let table = Environ.opaque_tables env in
             let typ = Typeops.type_of_constant_in env (kn,names) in
@@ -611,8 +609,7 @@ and translate_cofix order evd env t =
   in
 
   (* env_rec is the environement under fipoints. *)
-  let en l = Array.map (to_constr !evd) l in
-  let env_rec = push_rec_types (lna, en tl, en bl) env in
+  let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =
     let lams, body = decompose_lam_assum !evd bl.(n) in
@@ -714,8 +711,7 @@ and translate_fix order evd env t =
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
   (* env_rec is the environement under fipoints. *)
-  let en l = Array.map (to_constr !evd) l in
-  let env_rec = push_rec_types (lna, en tl, en bl) env in
+  let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =
     let lams, body = decompose_lam_assum !evd bl.(n) in
@@ -1086,22 +1082,14 @@ let rec translate_mind_body name order evdr env kn b inst =
       (Array.to_list b.mind_packets)
   in
   debug_evar_map [`Inductive] "translate_mind, evd = \n" !evdr;
-  let _, ctx = Evd.universe_context ~names:[] ~extensible:false !evdr in
+  let poly = match b.mind_universes with Monomorphic_ind _ -> false | _ -> true in
+  let univs = Evd.ind_univ_entry ~poly !evdr in
   let res = {
     mind_entry_record = None;
     mind_entry_finite = b.mind_finite;
     mind_entry_params = mind_entry_params_R;
     mind_entry_inds = mind_entry_inds_R;
-    (* XXX: Review *)
-    (* mind_entry_polymorphic = b.mind_polymorphic; *)
-    mind_entry_universes =
-      (match b.mind_universes with
-       | Monomorphic_ind _ -> Monomorphic_ind_entry ctx
-       | Polymorphic_ind _ -> Polymorphic_ind_entry ctx
-       (* XXX We cannot do this yet *)
-       | Cumulative_ind _ -> Polymorphic_ind_entry ctx
-       (* Cumulative_ind_entry (snd ctx) *)
-      );
+    mind_entry_universes = univs;
     mind_entry_private = b.mind_private;
   } in
   Debug.debug_mutual_inductive_entry !evdr res;

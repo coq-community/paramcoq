@@ -13,27 +13,23 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Ltac_plugin
 open Names
-open Vars
-open Environ
-open Context
 open EConstr
 open Pp
 
-let toCDecl (old: Names.name * ((Constr.constr) option) * Constr.constr) : Context.Rel.Declaration.t =
+let toCDecl (old: Name.t * ((Constr.constr) option) * Constr.constr) : Context.Rel.Declaration.t =
   let (name,value,typ) = old in
   match value with
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
   | None -> Context.Rel.Declaration.LocalAssum (name,typ)
 
-let toDecl (old: Names.name * ((constr) option) * constr) : rel_declaration =
+let toDecl (old: Name.t * ((constr) option) * constr) : rel_declaration =
   let (name,value,typ) = old in
   match value with
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
   | None -> Context.Rel.Declaration.LocalAssum (name,typ)
 
-let fromDecl (n: rel_declaration) :  Names.name * ('a option) * 'a =
+let fromDecl (n: rel_declaration) :  Name.t * ('a option) * 'a =
   match n with
   | Context.Rel.Declaration.LocalDef (name,value,typ) -> (name,Some value,typ)
   | Context.Rel.Declaration.LocalAssum (name,typ) -> (name,None,typ)
@@ -142,9 +138,9 @@ let not_implemented ?(reason = "no reason") env evd t =
   failwith "not_implemented"
 
 module SortSet = Set.Make(Sorts)
-let rec sorts accu t = match Term.kind_of_term t with
- | Sort t -> SortSet.add t accu
- | _ -> Term.fold_constr sorts accu t
+let rec sorts accu t = match Constr.kind t with
+ | Constr.Sort t -> SortSet.add t accu
+ | _ -> Constr.fold sorts accu t
 
 let debug_mutual_inductive_entry =
   let open Entries in
@@ -159,7 +155,7 @@ let debug_mutual_inductive_entry =
         | None -> "None")
     in
     let mind_entry_finite_pp =
-      let open Decl_kinds in str
+      let open Declarations in str
       (match entry.mind_entry_finite with
        Finite -> "Finite" | CoFinite -> "CoFinite" | BiFinite -> "BiFinite")
     in
@@ -199,7 +195,9 @@ let debug_mutual_inductive_entry =
     in
     let mind_entry_universes_pp =
       match entry.mind_entry_universes with
-      | Monomorphic_ind_entry ux | Polymorphic_ind_entry ux ->
+      | Monomorphic_ind_entry ux ->
+         Univ.pr_universe_context_set Universes.pr_with_global_universes ux
+      | Polymorphic_ind_entry ux ->
          Univ.pr_universe_context Universes.pr_with_global_universes ux
       | Cumulative_ind_entry ci -> Univ.pr_cumulativity_info Universes.pr_with_global_universes ci
     in
