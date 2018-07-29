@@ -82,7 +82,7 @@ let declare_abstraction ?(opaque = false) ?(continuation = default_continuation)
     let evdr = ref evd in
     let a_R = translate arity evdr env a in
     debug [`Abstraction] "a_R = " env !evdr a_R;
-    debug_evar_map Debug.all "abstraction, evar_map =" !evdr;
+    debug_evar_map Debug.all "abstraction, evar_map = " !evdr;
     !evdr, a_R
   in
   let evd = !evdr in
@@ -312,7 +312,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
 let command_variable ?(continuation = default_continuation) arity variable names =
   error (Pp.str "Cannot translate an axiom nor a variable. Please use the 'Parametricity Realizer' command.")
 
-let translateFullName arity (constant : Names.constant) : string =
+let translateFullName ~fullname arity (constant : Names.constant) : string =
   let nstr =
     (translate_string arity
      @@ Names.Label.to_string
@@ -324,10 +324,12 @@ let translateFullName arity (constant : Names.constant) : string =
      @@ Names.canonical_con
      @@ constant) in
   let plstr = Str.split (Str.regexp ("\.")) pstr in
-  (String.concat "_o_" (plstr@[nstr]))
+  if fullname then
+    (String.concat "_o_" (plstr@[nstr]))
+  else nstr
 
 
-let command_constant ?(continuation = default_continuation) arity constant names =
+let command_constant ?(continuation = default_continuation) ~fullname arity constant names =
   let poly, opaque =
     let cb = Global.lookup_constant constant in
     let open Declarations in
@@ -338,7 +340,7 @@ let command_constant ?(continuation = default_continuation) arity constant names
     (match cb.const_body with Def _ -> false | _ -> true)
   in
   let name = match names with
-      | None -> Names.id_of_string (translateFullName arity constant)
+      | None -> Names.id_of_string (translateFullName ~fullname arity constant)
       | Some name -> name
   in
   let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
@@ -349,7 +351,7 @@ let command_constant ?(continuation = default_continuation) arity constant names
   let constr = mkConstU (fst pconst, EInstance.make @@ snd pconst) in
   declare_abstraction ~continuation ~opaque ~kind arity (ref evd) env constr name
 
-let command_inductive ?(continuation = default_continuation) arity inductive names =
+let command_inductive ?(continuation = default_continuation) ~fullname arity inductive names =
   let (evd, env) = Lemmas.get_current_context () in
   let evd, pind =
     Evd.(with_context_set univ_rigid evd (Universes.fresh_inductive_instance env inductive))
@@ -357,9 +359,9 @@ let command_inductive ?(continuation = default_continuation) arity inductive nam
   let name = match names with
       | None ->
              Names.id_of_string
-          @@ translate_string arity
-          @@ Names.Label.to_string
-          @@ Names.MutInd.label
+          @@ translateFullName ~fullname arity
+          @@ Names.Constant.make1
+          @@ Names.MutInd.canonical
           @@ fst
 	  @@ fst
 	  @@ pind
@@ -374,20 +376,20 @@ let command_constructor ?(continuation = default_continuation) arity gref names 
         ++ (Printer.pr_global gref)
         ++ (str "' is a constructor. To generate its parametric translation, please translate its inductive first."))
 
-let command_reference ?(continuation = default_continuation) arity gref names =
+let command_reference ?(continuation = default_continuation) ?(fullname = false) arity gref names =
    check_nothing_ongoing ();
    let open Globnames in
    match gref with
    | VarRef variable ->
      command_variable ~continuation arity variable names
    | ConstRef constant ->
-     command_constant ~continuation arity constant names
+     command_constant ~continuation ~fullname arity constant names
    | IndRef inductive ->
-     command_inductive ~continuation arity inductive names
+     command_inductive ~continuation ~fullname arity inductive names
    | ConstructRef constructor ->
      command_constructor ~continuation arity gref names
 
-let command_reference_recursive ?(continuation = default_continuation) arity gref =
+let command_reference_recursive ?(continuation = default_continuation) ?(fullname = false) arity gref =
   let open Globnames in
   let gref= Globnames.canonical_gr gref in
   let label = Names.Label.of_id (Nametab.basename_of_global gref) in
@@ -417,7 +419,7 @@ let command_reference_recursive ?(continuation = default_continuation) arity gre
   (* DEBUG: *)
   let open Pp in msg_info  (str "DepRefs:");
   List.iter (fun x -> let open Pp in msg_info (Printer.pr_global x)) dep_refs;
-  list_continuation continuation (fun continuation gref -> command_reference ~continuation arity gref None) dep_refs ()
+  list_continuation continuation (fun continuation gref -> command_reference ~continuation ~fullname arity gref None) dep_refs ()
 
 let translate_command arity c name =
   if !ongoing_translation then error (Pp.str "On going translation.");

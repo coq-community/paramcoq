@@ -59,23 +59,17 @@ module CoqConstants = struct
     List.iter extract_type_sort [eq_r.ind; eq_r.refl; eq_rect];
     extract_pred_sort eq_rect
 
-  let param_papp evdref r args =
-    let open EConstr in
-    mkApp (Evarutil.e_new_global evdref r, args)
-
   let eq evdref args =
-    param_papp evdref (Coqlib.build_coq_eq_data ()).ind args
+    Program.papp evdref Program.coq_eq_ind args
 
   let eq_refl evdref args =
-    param_papp evdref (Coqlib.build_coq_eq_data ()).refl args
+    Program.papp evdref Program.coq_eq_refl args
 
   let transport evdref args =
-    param_papp evdref
-      (Coqlib.coq_reference "paramcoq" ["Init"; "Logic"] "eq_rect")
-      args
+    Program.papp evdref Program.coq_eq_rect args
 
   let proof_irrelevance evdref args =
-    param_papp evdref Coqlib.(coq_reference msg ["Logic"; "ProofIrrelevance"] "proof_irrelevance") args
+    Program.papp evdref (fun () -> Coqlib.coq_reference msg ["Logic"; "ProofIrrelevance"] "proof_irrelevance") args
 end
 
 let program_mode = ref false
@@ -608,7 +602,7 @@ and translate_cofix order evd env t =
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
 
-  (* env_rec is the environement under fipoints. *)
+  (* env_rec is the environement under fixpoints. *)
   let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =
@@ -710,7 +704,7 @@ and translate_fix order evd env t =
      let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
-  (* env_rec is the environement under fipoints. *)
+  (* env_rec is the environement under fixpoints. *)
   let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =

@@ -96,7 +96,7 @@ let debug flags (s : string) env evd c =
 
 let debug_evar_map flags s evd =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then (
-    Feedback.msg_info Pp.(str s ++ Termops.pr_evar_universe_context (Evd.evar_universe_context evd)))
+    Feedback.msg_info Pp.(str s ++ Termops.pr_evar_map ~with_univs:true None evd))
 
 let debug_string flags s =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then
