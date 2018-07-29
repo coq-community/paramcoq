@@ -17,7 +17,7 @@ open Names
 open EConstr
 open Pp
 
-let toCDecl (old: Name.t * ((Constr.constr) option) * Constr.constr) : Context.Rel.Declaration.t =
+let toCDecl (old: Name.t * ((Constr.constr) option) * Constr.constr) : (Constr.constr, Constr.constr) Context.Rel.Declaration.pt =
   let (name,value,typ) = old in
   match value with
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
@@ -55,7 +55,7 @@ let all = [`ProofIrrelevance;
 
 let debug_flag = [`Time; `Module; `Realizer; `Translate; `Cast; `Inductive; `Module]
 
-let debug_mode = ref false
+let debug_mode = ref true
 let set_debug_mode =
    Goptions.declare_bool_option
     { Goptions.optdepr  = false;
@@ -150,7 +150,13 @@ let debug_mutual_inductive_entry =
     let mind_entry_record_pp = str
       (match entry.mind_entry_record with
         | Some (Some id) ->
-           Printf.sprintf "Some (Some %s)" (Id.to_string id)
+           let s = ref "" in
+           let first = ref true in
+           for i = 0 to Array.length id - 1 do
+             if not !first then s := !s ^ ", " else first := false;
+             s := !s ^ Id.to_string id.(i)
+           done;
+           Printf.sprintf "Some (Some %s)" !s
         | Some None -> "Some None"
         | None -> "None")
     in
@@ -196,10 +202,10 @@ let debug_mutual_inductive_entry =
     let mind_entry_universes_pp =
       match entry.mind_entry_universes with
       | Monomorphic_ind_entry ux ->
-         Univ.pr_universe_context_set Universes.pr_with_global_universes ux
+         Univ.pr_universe_context_set UnivNames.pr_with_global_universes ux
       | Polymorphic_ind_entry ux ->
-         Univ.pr_universe_context Universes.pr_with_global_universes ux
-      | Cumulative_ind_entry ci -> Univ.pr_cumulativity_info Universes.pr_with_global_universes ci
+         Univ.pr_universe_context UnivNames.pr_with_global_universes ux
+      | Cumulative_ind_entry ci -> Univ.pr_cumulativity_info UnivNames.pr_with_global_universes ci
     in
     let mind_entry_private_pp =
       match entry.mind_entry_private with
