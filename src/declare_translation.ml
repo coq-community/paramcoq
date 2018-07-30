@@ -233,7 +233,8 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        ignore (Declaremods.end_module ()); continuation ())
      (fun continuation -> function
      | (lab, SFBconst cb) when (match cb.const_body with OpaqueDef _ -> false | Undef _ -> true | _ -> false) ->
-       let (evd, env) = ref Evd.empty, Global.env () in
+       let evd, env = Pfedit.get_current_context () in
+       let evd = ref evd in
        let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
@@ -250,7 +251,8 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
          | Polymorphic_const _ -> true
        in
        let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
-       let (evdr, env) = ref Evd.empty, Global.env () in
+       let evdr, env = Pfedit.get_current_context () in
+       let evdr = ref evdr in
        let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
@@ -271,7 +273,8 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        declare_abstraction ~opaque ~continuation ~kind arity evdr env c lab_R
 
      | (lab, SFBmind _) ->
-       let (evdr, env) = ref Evd.empty, Global.env () in
+       let evdr, env = Pfedit.get_current_context () in
+       let evdr = ref evdr in
        let mut_ind = Mod_subst.mind_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
        let ind = (mut_ind, 0) in
        if try ignore (Relations.get_inductive arity ind); true with Not_found -> false then
