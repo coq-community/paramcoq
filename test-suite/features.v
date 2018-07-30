@@ -22,7 +22,7 @@ Print Module A_R.
 Print Module A_R.B_R.
 
 (* Parametricity Module Bool. *)
-Print Module Bool_R.
+(* Print Module Bool_R. *)
 
 (** Unary parametricity *)
 Parametricity Translation (forall X, X -> X) as ID_R arity 1.

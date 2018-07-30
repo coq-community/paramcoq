@@ -50,12 +50,11 @@ Global Parametricity Tactic := ((destruct_reflexivity; fail)
 
 Require Import ProofIrrelevance. (* for opaque terms *)
 
-(*
 Parametricity Module Logic.
 Parametricity Module Datatypes.
 
-
 Parametricity Module Logic_Type.
+Parametricity Module Decimal.
 Parametricity Module Nat.
 
 Parametricity Module Specif.
@@ -65,4 +64,3 @@ Parametricity Module Wf.
 Parametricity Module Tactics.
 
 Export Logic_R Datatypes_R Logic_Type_R Specif_R Nat_R Peano_R Wf_R Tactics_R. 
-*)
