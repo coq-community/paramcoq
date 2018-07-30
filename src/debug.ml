@@ -53,9 +53,9 @@ let all = [`ProofIrrelevance;
            `Module;
            `Realizer; `Opacity]
 
-let debug_flag = [`Time; `Module; `Realizer; `Translate; `Cast; `Inductive; `Module]
+let debug_flag = [`Time; `Fix; `Module; `Abstraction; `Realizer; `Translate; `Cast; `Inductive; `Module; `ProofIrrelevance]
 
-let debug_mode = ref true
+let debug_mode = ref false
 let set_debug_mode =
    Goptions.declare_bool_option
     { Goptions.optdepr  = false;
@@ -83,7 +83,6 @@ let debug_env flags (s : string) env evd =
 
 
 let debug flags (s : string) env evd c =
-  let c = to_constr evd c in
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then
     try
       let env = debug_rename_env env evd in
@@ -91,7 +90,7 @@ let debug flags (s : string) env evd c =
        ++ Printer.pr_context_of env evd));
       Feedback.(msg_notice (Pp.str ""
          ++ Pp.str "\n |-"
-         ++ Printer.safe_pr_constr_env env evd c))
+         ++ Printer.pr_econstr_env env evd c))
     with e -> Feedback.(msg_notice (str (Printf.sprintf "Caught exception while debugging '%s'" (Printexc.to_string e))))
 
 let debug_evar_map flags s evd =

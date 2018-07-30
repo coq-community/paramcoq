@@ -59,11 +59,10 @@ module CoqConstants = struct
       | Some evd -> evdref := evd
       | None -> ()
     in
-    let open Coqlib in
-    let eq_r = build_coq_eq_data () in
-    let eq_rect = coq_reference "paramcoq" ["Init"; "Logic"] "eq_rect" in
-    List.iter extract_type_sort [eq_r.ind; eq_r.refl; eq_rect];
-    extract_pred_sort eq_rect
+    List.iter
+      extract_type_sort
+      Program.([coq_eq_ind (); coq_eq_refl (); coq_eq_rect ()]);
+    extract_pred_sort (Program.coq_eq_rect ())
 
   let eq evdref args =
     Program.papp evdref Program.coq_eq_ind args
@@ -889,13 +888,15 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   debug [`Fix] "source =" env !evdr source;
   debug [`Fix] "target =" env !evdr target;
   debug [`Fix] "typ =" env !evdr typ;
-  if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
-    let env_R = translate_env order evdr env in
-    let rc_order = rev_range (fun k -> (Name (Id.of_string (Printf.sprintf "rel_%d" k))), None,
-                         lift k (prime !evdr order k typ)) order in
-    let env_R = push_rel_context (List.map toDecl rc_order) env_R in
-    debug [`Fix] "typ_R =" env_R !evdr typ_R
-  end;
+  let env_R =
+    if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
+      let env_R = translate_env order evdr env in
+      let rc_order = rev_range (fun k -> (Name (Id.of_string (Printf.sprintf "rel_%d" k))), None,
+                                         lift k (prime !evdr order k typ)) order in
+      let env_R' = push_rel_context (List.map toDecl rc_order) env_R in
+      debug [`Fix] "typ_R =" env_R' !evdr typ_R;
+      env_R
+    end else env in
   let instantiate_fixpoint_in_rel_context rc =
     let (ri, k), stuff = fix in
     let pos = depth in
@@ -909,13 +910,18 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   let env_rc = rel_context env in
   let env_rc = instantiate_fixpoint_in_rel_context (List.map fromDecl env_rc) in
   let path = CoqConstants.eq evdr [| typ; source; target|] in
+  debug [`Fix] "path" env !evdr path;
   let gen_rc, new_vec, path = weaken_unused_free_rels env_rc !evdr path in
-  let gen_path = it_mkProd_or_LetIn path  gen_rc in
-  debug [`Fix] "gen_path_type" Environ.empty_env !evdr gen_path;
-  let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
+  let gen_path_type = it_mkProd_or_LetIn path  gen_rc in
+  debug [`Fix] "gen_path_type" Environ.empty_env !evdr gen_path_type;
+  let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path_type in
   evdr := evd;
-  let let_gen acc = mkLetIn (Name (Id.of_string "gen_path"), hole, gen_path, acc) in
-  let_gen @@ (fold_nat (fun k acc ->
+  let let_gen acc = mkLetIn (Name (Id.of_string "gen_path"), hole, gen_path_type, acc) in
+  let env_R' =
+    let decl_gen_path = Context.Rel.Declaration.LocalDef (Name (Id.of_string "gen_path"),hole,gen_path_type) in
+    push_rel decl_gen_path env_R in
+  let res1 =
+    (fold_nat (fun k acc ->
     let pred_sub =
       (range (fun x -> lift 1 (prime evd order (k+1+x) target)) (order-1 - k))
       @ [ mkRel 1 ]
@@ -925,6 +931,7 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
     CoqConstants.add_constraints evdr sort;
     let index = lift 1 (prime evd order k typ) in
     let pred = mkLambda (Name (Id.of_string "x"), index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
+    debug [`Fix] "pred = " env_R' !evdr pred;
     let base = lift 1 (prime evd order k source) in
     let endpoint = lift 1 (prime evd order k target) in
     let path = mkApp (mkRel 1,
@@ -933,7 +940,12 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
     CoqConstants.transport evdr
           [| index;
              base;
-             pred; acc; endpoint; path |]) (lift 1 acc) order)
+             pred; acc; endpoint; path |]) (lift 1 acc) order) in
+  let res = let_gen @@ res1 in
+  debug [`Fix] "res1 = " env_R' !evdr res1;
+  debug [`Fix] "gen_path_type" env_R !evdr gen_path_type;
+  debug [`Fix] "res = " env_R !evdr res;
+  res
 
 and weaken_unused_free_rels env_rc sigma term =
   (* Collect the dependencies with [vars] in a rel_context. *)
