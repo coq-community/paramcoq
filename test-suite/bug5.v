@@ -42,13 +42,13 @@ Admitted.
 
 Definition T := forall a b : nat, b <> 0 -> modS a  b < b.
 Parametricity Recursive T.
-Print Top__o__T_R.
+Print T_R.
 
 Axiom NNmod_upper_boundA_R : (fun H H0 : forall a b : nat, b <> 0 -> modS a b < b =>
 forall (a₁ a₂ : nat) (a_R : nat_R a₁ a₂) (b₁ b₂ : nat) (b_R : nat_R b₁ b₂)
   (H1 : b₁ <> 0) (H2 : b₂ <> 0),
-Coq__o__Init__o__Logic__o__not_R (eq_R nat_R b_R nat_R_O_R) H1 H2 ->
-Coq__o__Init__o__Peano__o__lt_R (Top__o__modS_R a_R b_R) b_R (H a₁ b₁ H1)
+not_R (eq_R nat_R b_R nat_R_O_R) H1 H2 ->
+lt_R (modS_R a_R b_R) b_R (H a₁ b₁ H1)
   (H0 a₂ b₂ H2)) NNmod_upper_boundA NNmod_upper_boundA.
 
 Realizer  NNmod_upper_boundA as NNmod_upper_boundA_RR := NNmod_upper_boundA_R.
@@ -79,7 +79,54 @@ Defined.
 Require Import ProofIrrelevance.
 Parametricity Recursive sig_rec.
 
-Parametricity Recursive GcdS.
+Ltac destruct_reflexivity := 
+  intros ; repeat match goal with 
+    | [ x : _ |- _ = _ ] => destruct x; reflexivity; fail
+  end.
+
+Ltac destruct_construct x := 
+    (destruct x; [ constructor 1 ]; auto; fail)
+ || (destruct x; [ constructor 1 | constructor 2 ]; auto; fail)
+ || (destruct x; [ constructor 1 | constructor 2 | constructor 3]; auto; fail).
+
+Ltac unfold_cofix := intros; match goal with 
+ [ |- _ = ?folded ] =>  
+    let x := fresh "x" in 
+    let typ := type of folded in 
+    (match folded with _ _ => pattern folded | _ => pattern folded at 2 end);
+    match goal with [ |- ?P ?x ] => 
+    refine (let rebuild : typ -> typ := _ in 
+            let path : rebuild folded = folded := _ in  
+            eq_rect _ P _ folded path) end; 
+    [ intro x ; destruct_construct x; fail 
+    | destruct folded; reflexivity
+    | reflexivity]; fail
+end.
+
+Ltac destruct_with_nat_arg_pattern x :=
+  pattern x;
+  match type of x with 
+   | ?I 0 => refine (let gen : forall m (q : I m), 
+     (match m return I m -> Type with 
+         0 => fun p => _ p
+     | S n => fun _  => unit end q) := _ in gen 0 x)     
+   | ?I (S ?n) => refine (let gen : forall m (q : I m), 
+     (match m return I m -> Type with 
+         0 => fun _  => unit 
+     | S n => fun p => _ p end q) := _ in gen (S n) x)
+  end; intros m q; destruct q.
+
+Ltac destruct_reflexivity_with_nat_arg_pattern := 
+  intros ; repeat match goal with 
+    | [ x : _ |- _ = _ ] => destruct_with_nat_arg_pattern x; reflexivity; fail
+  end.
+ 
+Global Parametricity Tactic := ((destruct_reflexivity; fail)
+                            || (unfold_cofix; fail) 
+                            || (destruct_reflexivity_with_nat_arg_pattern; fail)
+                            ||  auto). 
+
+Parametricity Recursive GcdS qualified.
 
 (*
 1 subgoal
