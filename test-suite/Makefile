@@ -4,7 +4,7 @@ COQC := $(COQBIN)coqc
 
 all: Parametricity.vo 
 
-examples:: example.vo ListQueue.vo features.vo wadler.vo
+examples:: example.vo ListQueue.vo features.vo wadler.vo bug.vo bug2.vo bug3.vo bug4.vo bug5.vo dummyFix.v exmNotParametric.v
 
 Parametricity.vo: Parametricity.v
 	$(COQC) -I ../src $<
@@ -28,6 +28,9 @@ features.vo: features.v Parametricity.vo
 	$(COQC) -I ../src $<
 
 wadler.vo: wadler.v Parametricity.vo 
+	$(COQC) -I ../src $<
+
+bug%.vo: bug%.v
 	$(COQC) -I ../src $<
 
 ide:: Parametricity.vo 

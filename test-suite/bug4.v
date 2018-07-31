@@ -1,4 +1,51 @@
+
 Declare ML Module "paramcoq".
+
+Require Import NPeano.
+Require Import Omega.
+
+Print BinPosDef.Pos.sub_mask.
+
+Fixpoint sub_mask (xx yy : positive) {struct yy} : BinPosDef.Pos.mask :=
+  match xx with
+  | (p~1)%positive =>
+      match yy with
+      | (q~1)%positive => BinPosDef.Pos.double_mask (sub_mask p q)
+      | (q~0)%positive => BinPosDef.Pos.succ_double_mask (sub_mask p q)
+      | 1%positive => BinPosDef.Pos.IsPos p~0
+      end
+  | (p~0)%positive =>
+      match yy with
+      | (q~1)%positive => BinPosDef.Pos.succ_double_mask (sub_mask_carry p q)
+      | (q~0)%positive => BinPosDef.Pos.double_mask (sub_mask p q)
+      | 1%positive => BinPosDef.Pos.IsPos (BinPosDef.Pos.pred_double p)
+      end
+  | 1%positive =>
+      match yy with
+      | (_~1)%positive => BinPosDef.Pos.IsNeg
+      | (_~0)%positive => BinPosDef.Pos.IsNeg
+      | 1%positive => BinPosDef.Pos.IsNul
+      end
+  end
+
+with sub_mask_carry (xx yy : positive) {struct yy} : BinPosDef.Pos.mask :=
+  match xx with
+  | (p~1)%positive =>
+      match yy with
+      | (q~1)%positive => BinPosDef.Pos.succ_double_mask (sub_mask_carry p q)
+      | (q~0)%positive => BinPosDef.Pos.double_mask (sub_mask p q)
+      | 1%positive => BinPosDef.Pos.IsPos (BinPosDef.Pos.pred_double p)
+      end
+  | (p~0)%positive =>
+      match yy with
+      | (q~1)%positive => BinPosDef.Pos.double_mask (sub_mask_carry p q)
+      | (q~0)%positive => BinPosDef.Pos.succ_double_mask (sub_mask_carry p q)
+      | 1%positive => BinPosDef.Pos.double_pred_mask p
+      end
+  | 1%positive => BinPosDef.Pos.IsNeg
+  end.
+
+Set Parametricity Debug.
 
 Ltac destruct_reflexivity := 
   intros ; repeat match goal with 
@@ -47,20 +94,4 @@ Global Parametricity Tactic := ((destruct_reflexivity; fail)
                             || (destruct_reflexivity_with_nat_arg_pattern; fail)
                             ||  auto). 
 
-
-Require Import ProofIrrelevance. (* for opaque terms *)
-
-Parametricity Module Logic.
-Parametricity Module Datatypes.
-
-Parametricity Module Logic_Type.
-Parametricity Module Decimal.
-Parametricity Module Nat.
-
-Parametricity Module Specif.
-Parametricity Module Peano.
-
-Parametricity Module Wf.
-Parametricity Module Tactics.
-
-Export Logic_R Datatypes_R Logic_Type_R Specif_R Nat_R Peano_R Wf_R Tactics_R. 
+Parametricity Recursive sub_mask.

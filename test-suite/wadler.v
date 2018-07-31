@@ -2,8 +2,6 @@
 Require Import List.
 Require Import Parametricity.
 
-Parametricity nat.
-
 Lemma nat_R_equal : 
   forall x y, nat_R x y -> x = y.
 intros x y H; induction H; subst; trivial.
@@ -14,8 +12,6 @@ Lemma equal_nat_R :
 intros x y H; subst.
 induction y; constructor; trivial.
 Defined.
-
-Parametricity list.
 
 Definition full_relation {A B} (x : A) (y : B) := True.
 
@@ -198,9 +194,4 @@ Fixpoint zip {X Y} (l1 : list X) (l2 : list Y) : list (X * Y) :=
 Parametricity zip.
 Definition zip_free_theorem : FREE_THEOREM (@zip) := param_ZIP_naturality _ zip_R.
 
-      
-
-
-
-
-
+End ZipType.

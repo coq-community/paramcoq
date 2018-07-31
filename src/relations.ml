@@ -14,12 +14,10 @@
 (**************************************************************************)
 
 
-open Term
+open Ltac_plugin
 open Names
 open Globnames
 open Libobject
-
-
 
 let (set_parametricity_tactic, get_parametricity_tactic, print_parametricity_tactic) = 
     Tactic_option.declare_tactic_option "Parametricity tactic"
@@ -35,7 +33,7 @@ let relations = Summary.ref initial_relations ~name:"parametricity"
 
 let print_relations () = 
   IntMap.iter (fun n translations -> 
-   GMap.iter (fun gref c -> Pp.(msg_info (Printer.pr_global gref))) translations
+   GMap.iter (fun gref c -> Feedback.(msg_info (Printer.pr_global gref))) translations
   ) !relations
 
 let add (n : int) f = 
@@ -63,13 +61,13 @@ let in_relation = declare_object {(default_object "PARAMETRICITY") with
 let declare_relation n x x_R = 
  Lib.add_anonymous_leaf (in_relation (n, x, x_R))
  
-let declare_constant_relation (n : int) (c : constant) (c_R : constant) = 
+let declare_constant_relation (n : int) (c : Constant.t) (c_R : Constant.t) =
   declare_relation n (ConstRef c) (ConstRef c_R)
 
 let declare_inductive_relation (n : int) (i : inductive) (i_R : inductive) = 
   declare_relation n (IndRef i) (IndRef i_R)
 
-let declare_variable_relation (n : int) (v : variable) (v_R : constant) = 
+let declare_variable_relation (n : int) (v : variable) (v_R : Constant.t) =
   declare_relation n (VarRef v) (ConstRef v_R)
 
 let get_constant n c = 
