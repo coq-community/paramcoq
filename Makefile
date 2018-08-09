@@ -1,22 +1,16 @@
-.PHONY: coq clean
+# -*- Makefile -*-
 
-coq:: Makefile.coq
-	$(MAKE) -f Makefile.coq
+COQPROJECT=Make.cfg.local
+include Makefile.common
 
-src/paramcoq_mod.ml: src/paramcoq.mlpack
+src.$(COQVV)/paramcoq_mod.ml: src.$(COQVV)/paramcoq.mlpack
 	sed -e "s/\([^ ]\{1,\}\)/let _=Mltop.add_known_module\"\1\" /g" $< > $@
 	echo "let _=Mltop.add_known_module\"paramcoq\"" >> $@
 
-Makefile.coq: Make.cfg src/paramcoq_mod.ml
-	coq_makefile -f Make.cfg -o Makefile.coq
+pre-makefile:: src.$(COQVV)/paramcoq_mod.ml
 
-clean:: Makefile.coq
-	$(MAKE) -f Makefile.coq clean
+Make.cfg.local: Make.cfg
+	sed -e "s/src.version/src.$(COQVV)/" $< > $@
 
-distclean:
-	rm -f Makefile.coq Makefile.coq.bak .depend
-
-# if using opam, this installs paramcoq at the right place: ~/.opam/...
-# otherwise, use with sudo for a systemwide install
-install:
-	$(MAKE) -f Makefile.coq install
+this-distclean::
+	rm -f Make.cfg.local src.*/paramcoq_mod.ml
