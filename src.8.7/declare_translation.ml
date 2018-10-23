@@ -416,8 +416,8 @@ let command_reference_recursive ?(continuation = default_continuation) ?(fullnam
   let _, dep_refs = fold_sort graph Refset_env.empty direct (fun x l -> (inductive_of_constructor x)::l) [] in
   let dep_refs = List.rev dep_refs in
   (* DEBUG: *)
-  let open Pp in msg_info  (str "DepRefs:");
-  List.iter (fun x -> let open Pp in msg_info (Printer.pr_global x)) dep_refs;
+  (* let open Pp in msg_info  (str "DepRefs:");
+   * List.iter (fun x -> let open Pp in msg_info (Printer.pr_global x)) dep_refs; *)
   list_continuation continuation (fun continuation gref -> command_reference ~continuation ~fullname arity gref None) dep_refs ()
 
 let translate_command arity c name =

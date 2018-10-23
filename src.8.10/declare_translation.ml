@@ -15,15 +15,13 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Ltac_plugin
-open String
 open Feedback
 open Libnames
 open EConstr
 open Debug
 open Parametricity
 
-[@@@ocaml.warning "-27-40-42-48"]
+[@@@ocaml.warning "-40"]
 let error = CErrors.user_err
 let ongoing_translation = Summary.ref false ~name:"parametricity ongoing translation"
 let ongoing_translation_opacity = Summary.ref false ~name:"parametricity ongoing translation opacity"
@@ -40,7 +38,7 @@ let default_continuation = ignore
 
 let parametricity_close_proof () =
   let proof_obj, terminator = Proof_global.close_proof ~keep_body_ucst_separate:false (fun x -> x) in
-  let opacity = if !ongoing_translation_opacity then Vernacexpr.Opaque else Vernacexpr.Transparent in
+  let opacity = if !ongoing_translation_opacity then Proof_global.Opaque else Proof_global.Transparent in
   Proof_global.discard_current ();
   ongoing_translation := false;
   Proof_global.apply_terminator terminator (Proof_global.Proved (opacity,None,proof_obj))
@@ -54,8 +52,6 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
     let typecheck = true in
     tclTHEN (Refine.refine ~typecheck begin fun sigma -> term sigma end) tactic
   in
-  let open Proof_global in
-  let open Vernacexpr in
   ongoing_translation_opacity := opaque;
   Lemmas.start_proof name ~init_tac kind evd typ hook;
   let proof = Proof_global.give_me_the_proof () in
@@ -143,7 +139,8 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
      | Var id -> Globnames.VarRef id
      | Const (cst, _) -> Globnames.ConstRef cst
      | _ -> error (Pp.str "Realizer works only for variables and constants.")) in
-  let typ = Typing.e_type_of env evd var in
+  let evd', typ = Typing.type_of env !evd var in
+  evd := evd';
   let typ_R = Parametricity.relation arity evd env typ in
   let sub = range (fun _ -> var) arity in
   let typ_R = Vars.substl sub typ_R in
@@ -155,11 +152,13 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
       let realtyp = Retyping.get_type_of env sigma term in
       debug [`Realizer] (Printf.sprintf "real in realdef (%d) =" !cpt) env sigma term;
       debug [`Realizer] (Printf.sprintf "realtyp in realdef (%d) =" !cpt) env sigma realtyp;
-      let evdr = ref sigma in
-      ignore (Evarconv.e_cumul env evdr realtyp typ_R);
-      debug [`Realizer] (Printf.sprintf "real in realdef (%d), after =" !cpt) env !evdr term;
-      debug [`Realizer] (Printf.sprintf "realtyp in realdef (%d), after =" !cpt) env !evdr realtyp;
-      (!evdr, term)
+      let sigma = 
+        match Evarconv.cumul env sigma realtyp typ_R with
+        | Some sigma -> sigma
+        | None -> sigma in
+      debug [`Realizer] (Printf.sprintf "real in realdef (%d), after =" !cpt) env sigma term;
+      debug [`Realizer] (Printf.sprintf "realtyp in realdef (%d), after =" !cpt) env sigma realtyp;
+      (sigma, term)
     | None -> fun sigma ->
       (let sigma, real = new_evar_compat env sigma typ_R in
       (sigma, real))
@@ -195,7 +194,7 @@ let rec list_continuation final f l _ = match l with [] -> final ()
 
 let rec translate_module_command ?name arity r  =
   check_nothing_ongoing ();
-  let qid = CAst.with_val (fun x -> x) (qualid_of_reference r) in
+  let qid = r in
   try
     let globdir = Nametab.locate_dir qid in
     match globdir with
@@ -236,7 +235,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
      | (lab, SFBconst cb) when (match cb.const_body with OpaqueDef _ -> false | Undef _ -> true | _ -> false) ->
        let evd, env = Pfedit.get_current_context () in
        let evd = ref evd in
-       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
+       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
@@ -254,19 +253,20 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
        let evdr, env = Pfedit.get_current_context () in
        let evdr = ref evdr in
-       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
+       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
        let evd, ucst =
-          Evd.(with_context_set univ_rigid !evdr (Universes.fresh_constant_instance env cst))
+          Evd.(with_context_set univ_rigid !evdr (UnivGen.fresh_constant_instance env cst))
        in
        let c = mkConstU (fst ucst, EInstance.make (snd ucst)) in
        evdr := evd;
        let lab_R = translate_id arity (Names.Label.to_id lab) in
        debug [`Module] "field : " env !evdr c;
        (try
-        let typ = Typing.e_type_of env evdr c in
+        let evd, typ = Typing.type_of env !evdr c in
+        evdr := evd;
         debug [`Module] "type :" env !evdr typ
        with e -> error (Pp.str  (Printexc.to_string e)));
        debug_string [`Module] (Printf.sprintf "constant field: '%s'." (Names.Label.to_string lab));
@@ -275,17 +275,17 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
      | (lab, SFBmind _) ->
        let evdr, env = Pfedit.get_current_context () in
        let evdr = ref evdr in
-       let mut_ind = Mod_subst.mind_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
+       let mut_ind = Mod_subst.mind_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        let ind = (mut_ind, 0) in
        if try ignore (Relations.get_inductive arity ind); true with Not_found -> false then
          continuation ()
        else begin
          let evd, pind =
-            Evd.(with_context_set univ_rigid !evdr (Universes.fresh_inductive_instance env ind))
+            Evd.(with_context_set univ_rigid !evdr (UnivGen.fresh_inductive_instance env ind))
          in
          evdr := evd;
          debug_string [`Module] (Printf.sprintf "inductive field: '%s'." (Names.Label.to_string lab));
-	 let ind_name = Names.id_of_string
+	 let ind_name = Names.Id.of_string
           @@ translate_string arity
           @@ Names.Label.to_string
           @@ Names.MutInd.label
@@ -315,17 +315,16 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
 let command_variable ?(continuation = default_continuation) arity variable names =
   error (Pp.str "Cannot translate an axiom nor a variable. Please use the 'Parametricity Realizer' command.")
 
-let translateFullName ~fullname arity (constant : Names.constant) : string =
+let translateFullName ~fullname arity (kername : Names.KerName.t) : string =
   let nstr =
     (translate_string arity
      @@ Names.Label.to_string
-     @@ Names.Constant.label
-     @@ constant)in 
+     @@ Names.KerName.label
+     @@ kername)in 
   let pstr =
     (Names.ModPath.to_string
-     @@ Names.modpath
-     @@ Names.canonical_con
-     @@ constant) in
+     @@ Names.KerName.modpath
+     @@ kername) in
   let plstr = Str.split (Str.regexp ("\.")) pstr in
   if fullname then
     (String.concat "_o_" (plstr@[nstr]))
@@ -343,27 +342,29 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
     (match cb.const_body with Def _ -> false | _ -> true)
   in
   let name = match names with
-      | None -> Names.id_of_string (translateFullName ~fullname arity constant)
+      | None -> Names.Id.of_string
+                @@ translateFullName ~fullname arity
+                @@ Names.Constant.canonical
+                @@ constant
       | Some name -> name
   in
   let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
-  let (evd, env) = Lemmas.get_current_context () in
+  let (evd, env) = Pfedit.get_current_context () in
   let evd, pconst =
-    Evd.(with_context_set univ_rigid evd (Universes.fresh_constant_instance env constant))
+    Evd.(with_context_set univ_rigid evd (UnivGen.fresh_constant_instance env constant))
   in
   let constr = mkConstU (fst pconst, EInstance.make @@ snd pconst) in
   declare_abstraction ~continuation ~opaque ~kind arity (ref evd) env constr name
 
 let command_inductive ?(continuation = default_continuation) ~fullname arity inductive names =
-  let (evd, env) = Lemmas.get_current_context () in
+  let (evd, env) = Pfedit.get_current_context () in
   let evd, pind =
-    Evd.(with_context_set univ_rigid evd (Universes.fresh_inductive_instance env inductive))
+    Evd.(with_context_set univ_rigid evd (UnivGen.fresh_inductive_instance env inductive))
   in
   let name = match names with
       | None ->
-             Names.id_of_string
+             Names.Id.of_string
           @@ translateFullName ~fullname arity
-          @@ Names.Constant.make1
           @@ Names.MutInd.canonical
           @@ fst
 	  @@ fst
@@ -406,28 +407,27 @@ let command_reference_recursive ?(continuation = default_continuation) ?(fullnam
      Globnames.IndRef ind
   in
   let rec fold_sort graph visited nexts f acc =
-    Refset_env.fold (fun ref ((visited, acc) as visacc) ->
+    Names.GlobRef.Set_env.fold (fun ref ((visited, acc) as visacc) ->
           let ref_ind = inductive_of_constructor ref in
-          if Refset_env.mem ref_ind visited
+          if Names.GlobRef.Set_env.mem ref_ind visited
           || Relations.is_referenced arity ref_ind  then visacc else
-          let nexts = Refmap_env.find ref graph in
-          let visited = Refset_env.add ref_ind visited in
+          let nexts = Names.GlobRef.Map_env.find ref graph in
+          let visited = Names.GlobRef.Set_env.add ref_ind visited in
           let visited, acc = fold_sort graph visited nexts f acc in
           let acc = f ref_ind acc in
           (visited, acc)
      ) nexts (visited, acc)
   in
-  let _, dep_refs = fold_sort graph Refset_env.empty direct (fun x l -> (inductive_of_constructor x)::l) [] in
+  let _, dep_refs = fold_sort graph Names.GlobRef.Set_env.empty direct (fun x l -> (inductive_of_constructor x)::l) [] in
   let dep_refs = List.rev dep_refs in
   (* DEBUG: *)
-  (* let open Pp in msg_info  (str "DepRefs:");
-   * List.iter (fun x -> let open Pp in msg_info (Printer.pr_global x)) dep_refs; *)
+  (* Pp.(msg_info (str "DepRefs:"));
+   * List.iter (fun x -> msg_info (Printer.pr_global x)) dep_refs; *)
   list_continuation continuation (fun continuation gref -> command_reference ~continuation ~fullname arity gref None) dep_refs ()
 
 let translate_command arity c name =
   if !ongoing_translation then error (Pp.str "On going translation.");
-  let open Constrexpr in
-  let (evd, env) = Lemmas.get_current_context () in
+  let (evd, env) = Pfedit.get_current_context () in
   let (evd, c) = Constrintern.interp_open_constr env evd c in
   let cte_option =
     match kind evd c with Const cte -> Some cte | _ -> None
