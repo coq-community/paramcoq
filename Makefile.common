@@ -33,11 +33,11 @@ COQVV:=dev
 COQVVV:=dev
 else
 COQV:= $(shell $(COQBIN)coqtop -v | head -1 \
-	     | sed 's/.*version \([0-9]\)[^ ]* .*/\1/')
+	     | sed 's/.*version \([0-9]*\)[^ ]* .*/\1/')
 COQVV:= $(shell $(COQBIN)coqtop -v | head -1 \
-	     | sed 's/.*version \([0-9]\.[0-9]\)[^ ]* .*/\1/')
+	     | sed 's/.*version \([0-9]*\.[0-9]*\)[^ ]* .*/\1/')
 COQVVV:= $(shell $(COQBIN)coqtop -v | head -1 \
-	     | sed 's/.*version \([0-9]\.[0-9]\.[0-9]\)[^ ]* .*/\1/')
+	     | sed 's/.*version \([0-9]*\.[0-9]*\.[0-9]*\)[^ ]* .*/\1/')
 endif
 
 # all: ---------------------------------------------------------------
