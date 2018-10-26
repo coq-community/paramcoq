@@ -1,28 +1,29 @@
 (**************************************************************************)
 (*                                                                        *)
-(*     CoqParam                                                           *)
-(*     Copyright (C) 2012                                                 *)
+(*     ParamCoq                                                           *)
+(*     Copyright (C) 2012 - 2018                                          *)
 (*                                                                        *)
-(*     Chantal Keller                                                     *)
-(*     Marc Lasson                                                        *)
+(*     See the AUTHORS file for the list of contributors                  *)
 (*                                                                        *)
-(*     INRIA - École Polytechnique - ÉNS de Lyon                          *)
-(*                                                                        *)
-(*   This file is distributed under the terms of the GNU Lesser General   *)
-(*   Public License                                                       *)
+(*   This file is distributed under the terms of the MIT License          *)
 (*                                                                        *)
 (**************************************************************************)
 
 (*i camlp4deps: "src/parametricity.cmo" "src/declare_translation.cmo" i*)
 
 DECLARE PLUGIN "parametricity"
+
+open Ltac_plugin
+open Feedback
+open Stdarg
+open Tacarg
 open Parametricity
 open Declare_translation
 
 VERNAC COMMAND EXTEND SetParametricityTactic CLASSIFIED AS SIDEFF
 | [ "Parametricity" "Tactic" ":=" tactic(t) ] -> [
     Relations.set_parametricity_tactic
-      (Locality.make_section_locality (Locality.LocalityFixme.consume ()))
+      (Locality.make_section_locality atts.Vernacinterp.locality)
       (Tacintern.glob_tactic t) ]
 END
 
@@ -44,7 +45,7 @@ VERNAC COMMAND EXTEND ParametricityDefined CLASSIFIED AS SIDEFF
 END
 
 VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF
-| [ "Parametricity" reference(c) ] -> 
+| [ "Parametricity" ref(c) ] -> 
   [
     command_reference default_arity (Constrintern.intern_reference c) None  
   ]
@@ -52,13 +53,21 @@ VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF
   [
     command_reference default_arity (Constrintern.intern_reference c) (Some name)
   ]
-| [ "Parametricity" reference(c) "arity" integer(arity) ] -> 
+| [ "Parametricity" reference(c) "qualified" ] ->
+  [
+    command_reference ~fullname:true default_arity (Constrintern.intern_reference c) None
+  ]
+| [ "Parametricity" reference(c) "arity" int(arity) ] -> 
   [
     command_reference arity (Constrintern.intern_reference c) None  
   ]
-| [ "Parametricity" reference(c) "arity" integer(arity) "as" ident(name) ] ->
+| [ "Parametricity" reference(c) "arity" int(arity) "as" ident(name) ] ->
   [
     command_reference arity (Constrintern.intern_reference c) (Some name)  
+  ]
+| [ "Parametricity" reference(c) "arity" int(arity) "qualified" ] ->
+  [
+    command_reference ~fullname:true arity (Constrintern.intern_reference c) None
   ]
 | [ "Parametricity" reference(c)  "as" ident(name) "arity" integer(arity) ] -> 
   [
@@ -74,6 +83,14 @@ VERNAC COMMAND EXTEND AbstractionRecursive CLASSIFIED AS SIDEFF
 | [ "Parametricity" "Recursive" reference(c) "arity" integer(arity) ] -> 
   [
     command_reference_recursive arity (Constrintern.intern_reference c)
+  ]
+| [ "Parametricity" "Recursive" reference(c) "qualified" ] ->
+  [
+    command_reference_recursive ~fullname:true default_arity (Constrintern.intern_reference c)
+  ]
+| [ "Parametricity" "Recursive" reference(c) "arity" integer(arity) "qualified" ] ->
+  [
+    command_reference_recursive ~fullname:true arity (Constrintern.intern_reference c)
   ]
 END
 

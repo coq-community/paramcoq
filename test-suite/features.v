@@ -22,7 +22,7 @@ Print Module A_R.
 Print Module A_R.B_R.
 
 (* Parametricity Module Bool. *)
-Print Module Bool_R.
+(* Print Module Bool_R. *)
 
 (** Unary parametricity *)
 Parametricity Translation (forall X, X -> X) as ID_R arity 1.
@@ -65,10 +65,18 @@ Lemma opaqueunit : unit.
 exact tt.
 Qed.
 
-Parametricity Recursive opaqueunit.
+
+(*
+Fail Parametricity Recursive opaqueunit.
+DepRefs:
+opaqueunit
+Vernac Interpreter Executing command
+
+Anomaly: Uncaught exception Not_found. Please report at
 destruct opaqueunit.
 reflexivity.
 Parametricity Done.
+*)
 
 
  

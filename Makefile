@@ -1,22 +1,16 @@
-.PHONY: coq clean
+# -*- Makefile -*-
 
-coq:: Makefile.coq
-	COQBIN=$(COQBIN) COQDEP=$(COQBIN)coqdep $(MAKE) -f Makefile.coq
+COQPROJECT=Make.cfg.local
+include Makefile.common
 
-src/paramcoq_mod.ml: src/paramcoq.mllib
+src.$(COQVV)/paramcoq_mod.ml: src.$(COQVV)/paramcoq.mlpack
 	sed -e "s/\([^ ]\{1,\}\)/let _=Mltop.add_known_module\"\1\" /g" $< > $@
 	echo "let _=Mltop.add_known_module\"paramcoq\"" >> $@
 
-Makefile.coq: Make.cfg src/paramcoq_mod.ml
-	$(COQBIN)coq_makefile -f Make.cfg -o Makefile.coq
-	sed -i 's/$$(COQDEP) $$(OCAMLLIBS)/$$(COQDEP) $$(OCAMLLIBS) -c/' Makefile.coq
+pre-makefile:: src.$(COQVV)/paramcoq_mod.ml
 
-clean:: Makefile.coq
-	$(MAKE) -f Makefile.coq clean
-	rm -f src/paramcoq_mod.ml
+Make.cfg.local: Make.cfg
+	sed -e "s/src.version/src.$(COQVV)/" $< > $@
 
-distclean:
-	rm -f Makefile.coq Makefile.coq.bak .depend
-
-install:
-	$(MAKE) -f Makefile.coq install
+this-distclean::
+	rm -f Make.cfg.local src.*/paramcoq_mod.ml

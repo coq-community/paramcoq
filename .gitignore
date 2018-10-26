@@ -1,0 +1,37 @@
+# Generated Makefile
+/Makefile.coq
+/Makefile.coq.conf
+
+# Make dependencies
+*.d
+
+# Backup files
+*.bak
+
+# emacs backup files
+*~
+
+# vim backup files
+\#*\#
+
+# Coq annotation files
+*.glob
+
+# Coq auxiliary files
+.*.aux
+
+# Coq compilation unit
+*.vo
+
+*.annot
+*.cmo
+*.cma
+*.cmi
+*.a
+*.o
+*.cmi
+*.cmt
+*.cmti
+*.cmx
+*.cmxs
+*.cmxa
