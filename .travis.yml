@@ -1,49 +1,40 @@
 dist: trusty
 sudo: required
-language: c
-cache:
-  apt: true
-  directories:
-  - $HOME/.opam
-addons:
-  apt:
-    sources:
-    - avsm
-    packages:
-    - opam
-    - aspcud
+language: generic
+
+services:
+  - docker
+
 env:
-  global:
-  - NJOBS=3
-  - COMPILER="system"
-  # system <=> 4.02.3
-  - yellow="\\e[33;1m"
-  - dflt="\\e[0m"
   matrix:
-  - COQ_VERSION="8.7.2"
-  - COQ_VERSION="8.8.1"
-  - COQ_VERSION="dev"
+  - COQ_IMAGE="coqorg/coq:8.7"
+  - COQ_IMAGE="coqorg/coq:8.8"
+  - COQ_IMAGE="coqorg/coq:dev"
 
 matrix:
   allow_failures:
-  - env: COQ_VERSION="dev"
+  - env: COQ_IMAGE="coqorg/coq:dev"
   fast_finish: true
 
-install:
-- opam init -j ${NJOBS} --compiler=${COMPILER} -n -y
-- opam config env && eval $(opam config env)
-- opam config var root
-- opam repo add coq-core-dev https://coq.inria.fr/opam/core-dev || true
-- opam update
-- opam repo list
-# The 'travis_wait' command below extends the 10 mn, no-output timeout to 20 mn
-- |
-  # Building Coq...
-  travis_wait opam install -j ${NJOBS} -y ocamlfind camlp5 coq.${COQ_VERSION}
-
-- opam list
+install: |
+  # Run the COQ container and display build metadata
+  docker run -d -i --init --name=COQ -v ${TRAVIS_BUILD_DIR}:/home/coq/paramcoq -w /home/coq/paramcoq ${COQ_IMAGE}
+  docker exec COQ /bin/bash --login -c "
+    export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '
+    set -ex
+    opam config list
+    opam repo list
+    opam list
+    "
 
 script:
-- echo -e "${yellow}Building paramcoq...${dflt}" && echo -en 'travis_fold:start:paramcoq.build\\r'
-- make
+- echo -e "${ANSI_YELLOW}Building paramcoq...${ANSI_RESET}" && echo -en 'travis_fold:start:paramcoq.build\\r'
+- |
+  docker exec COQ /bin/bash --login -c "
+    export PS4='+ \e[33;1m(\$0 @ line \$LINENO) \$\e[0m '
+    set -ex
+    sudo chown -R coq:coq /home/coq/paramcoq
+    make
+    "
+- docker stop COQ  # optional
 - echo -en 'travis_fold:end:paramcoq.build\\r'
