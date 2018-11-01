@@ -12,5 +12,10 @@ pre-makefile:: src.$(COQVV)/paramcoq_mod.ml
 Make.cfg.local: Make.cfg
 	sed -e "s/src.version/src.$(COQVV)/" $< > $@
 
+ifeq ($(COQVV),8.7)
+this-config::
+	sed -e "s/\(Parametricity Module Decimal.\)//" -i test-suite/Parametricity.v
+endif
+
 this-distclean::
 	rm -f Make.cfg.local src.*/paramcoq_mod.ml

@@ -35,6 +35,7 @@ script:
     set -ex
     sudo chown -R coq:coq /home/coq/paramcoq
     make
+    cd test-suite; make
     "
 - docker stop COQ  # optional
 - echo -en 'travis_fold:end:paramcoq.build\\r'
