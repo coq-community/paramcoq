@@ -89,9 +89,9 @@ let debug flags (s : string) env evd c =
          ++ Printer.pr_econstr_env env evd c))
     with e -> Feedback.(msg_notice (str (Printf.sprintf "Caught exception while debugging '%s'" (Printexc.to_string e))))
 
-let debug_evar_map flags s evd =
+let debug_evar_map flags s env evd =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then (
-    Feedback.msg_info Pp.(str s ++ Termops.pr_evar_map ~with_univs:true None evd))
+    Feedback.msg_info Pp.(str s ++ Termops.pr_evar_map ~with_univs:true None env evd))
 
 let debug_string flags s =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then
@@ -163,18 +163,16 @@ let debug_mutual_inductive_entry =
     debug_string all "env_params:"
     ;
     let env_params =
-      List.fold_left (fun acc ->
-          function
-          | (id, Entries.LocalAssumEntry typ) ->
-             debug_env all "acc = " acc evd;
+      List.fold_left (fun acc decl ->
+          debug_env all "acc = " acc evd;
+          match decl with
+          | Context.Rel.Declaration.LocalAssum (id, typ) ->
              debug all "typ = " acc evd (of_constr typ);
-             Environ.push_rel (toCDecl (Name id, None, typ)) acc
-          | (id, Entries.LocalDefEntry def) ->
-             debug_env all "acc = " acc evd;
+             Environ.push_rel decl acc
+          | Context.Rel.Declaration.LocalDef (id, def, typ) ->
              debug all "def = " acc evd (of_constr def);
-             let edef = EConstr.of_constr def in
-             Environ.push_rel (toCDecl (Name id, Some def,
-                                        EConstr.Unsafe.to_constr (Typing.unsafe_type_of acc evd edef))) acc)
+             debug all "typ = " acc evd (of_constr typ);
+             Environ.push_rel decl acc)
        (Global.env ()) (List.rev entry.mind_entry_params)
     in
     debug_string all "arities:";

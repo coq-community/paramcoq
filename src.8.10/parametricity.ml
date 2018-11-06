@@ -289,7 +289,7 @@ let compose_lam l b = lamn (List.length l) l b
 (* G |- t ---> |G|, x1, x2 |- [x1,x2] in |t| *)
 let rec relation order evd env (t : constr) : constr =
   debug_string [`Relation] (Printf.sprintf "relation %d evd env t" order);
-  debug_evar_map [`Relation]  "evd =" !evd;
+  debug_evar_map [`Relation]  "evd =" env !evd;
   debug [`Relation] "input =" env !evd t;
   let res = match kind !evd t with
     | Sort _s -> fold_nat (fun _ -> mkArrow (mkRel order)) (prop_or_type env evd t) order
@@ -328,7 +328,7 @@ let rec relation order evd env (t : constr) : constr =
   in
  if !debug_mode && List.exists (fun x -> List.mem x [`Relation]) debug_flag then begin
     debug_string [`Relation] (Printf.sprintf "exit relation %d evd env t" order);
-    debug_evar_map [`Relation]  "evd =" !evd;
+    debug_evar_map [`Relation]  "evd =" env !evd;
     debug [`Relation] "input =" env !evd t;
     debug_string [`Relation] (Printf.sprintf "input has cast : %b" (has_cast !evd t));
     debug_mode := false;
@@ -345,7 +345,7 @@ let rec relation order evd env (t : constr) : constr =
 (* G |- t ---> |G| |- |t| *)
 and translate order evd env (t : constr) : constr =
   debug_string [`Translate] (Printf.sprintf "translate %d evd env t" order);
-  debug_evar_map [`Translate]  "evd =" !evd;
+  debug_evar_map [`Translate]  "evd =" env !evd;
   debug [`Translate] "input =" env !evd t;
   let res = match kind !evd t with
     | Rel n -> mkRel ( (n - 1) * (order + 1) + 1)
@@ -432,7 +432,7 @@ and translate order evd env (t : constr) : constr =
  in
   if !debug_mode && List.exists (fun x -> List.mem x [`Translate]) debug_flag then begin
     debug_string [`Translate] (Printf.sprintf "exit translate %d evd env t" order);
-    debug_evar_map [`Translate]  "evd =" !evd;
+    debug_evar_map [`Translate]  "evd =" env !evd;
     debug [`Translate] "input =" env !evd t;
     debug_string [`Translate] (Printf.sprintf "input has cast : %b" (has_cast !evd t));
     debug_mode := false;
@@ -1047,12 +1047,6 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
 open Entries
 open Declarations
 
-let map_local_entry f = function
-  | Entries.LocalDefEntry  c -> Entries.LocalDefEntry (f c)
-  | Entries.LocalAssumEntry c -> Entries.LocalAssumEntry (f c)
-
-let constr_of_local_entry = function Entries.LocalDefEntry c | Entries.LocalAssumEntry c -> c
-
 (* Translation of inductives. *)
 
 let rec translate_mind_body name order evdr env kn b inst =
@@ -1060,7 +1054,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   (* let env = push_context b.mind_universes env in *)
   debug_string [`Inductive] "computing envs ...";
   debug_env [`Inductive] "translate_mind, env = \n" env !evdr;
-  debug_evar_map [`Inductive] "translate_mind, evd = \n" !evdr;
+  debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let envs =
     let params = subst_instance_context inst b.mind_params_ctxt in
     let env_params = push_rel_context (List.map of_rel_decl params) env in
@@ -1090,7 +1084,7 @@ let rec translate_mind_body name order evdr env kn b inst =
       (fun i x -> translate_mind_inductive name order evdr env (kn,i) b inst envs x)
       (Array.to_list b.mind_packets)
   in
-  debug_evar_map [`Inductive] "translate_mind, evd = \n" !evdr;
+  debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let poly = match b.mind_universes with Monomorphic_ind _ -> false | _ -> true in
   let univs = Evd.ind_univ_entry ~poly !evdr in
   let res = {
@@ -1109,24 +1103,23 @@ and translate_mind_param order evd env (l : (Constr.constr, Constr.constr) Conte
   let etoc c = to_constr !evd c in
   let rec aux env acc = function
      | [] -> acc
-     | (x, (Some def as op), hd)::tl ->
-       let x_R = (translate_name order x, Entries.LocalDefEntry (etoc @@ translate order evd env def)) in
-       let env = push_rel (toDecl (x, op, hd)) env in
+     | (Context.Rel.Declaration.LocalDef (x, def, typ) as decl) :: tl ->
+       let x_R = Context.Rel.Declaration.LocalDef (translate_name order x, etoc @@ translate order evd env def, etoc @@ relation order evd env typ) in
+       let env = push_rel decl env in
        let x_i = range (fun k ->
-                 (prime_name order k x, Entries.LocalDefEntry (etoc @@ lift k (prime !evd order k def)))) order in
+                 Context.Rel.Declaration.LocalDef (prime_name order k x, etoc @@ lift k (prime !evd order k def), etoc @@ lift k (prime !evd order k typ))) order in
        let acc = (x_R::x_i):: acc in
        aux env acc tl
-     | (x,None,hd)::tl ->
-           let x_R = (translate_name order x, Entries.LocalAssumEntry (etoc @@ relation order evd env hd)) in
-           let env = push_rel (toDecl (x, None, hd)) env in
-           let x_i = range (fun k ->
-                     (prime_name order k x, Entries.LocalAssumEntry (etoc @@ lift k (prime !evd order k hd)))) order in
-           let acc = (x_R::x_i):: acc in
-           aux env acc tl
+     | (Context.Rel.Declaration.LocalAssum (x, typ) as decl) :: tl ->
+       let x_R = Context.Rel.Declaration.LocalAssum (translate_name order x, etoc @@ relation order evd env typ) in
+       let env = push_rel decl env in
+       let x_i = range (fun k ->
+                 Context.Rel.Declaration.LocalAssum (prime_name order k x, etoc @@ lift k (prime !evd order k typ))) order in
+       let acc = (x_R::x_i):: acc in
+       aux env acc tl
   in
   let l = List.rev l in
-  List.map (function (Name x,c) -> (x, c) | _ -> failwith "anonymous param")
-    (List.flatten (aux env [] (List.map fromDecl (List.map of_rel_decl l))))
+  List.flatten (aux env [] (List.map of_rel_decl l))
 
 and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params, params, env_arities, env_arities_params) e =
   let p = List.length mut_entry.mind_params_ctxt in
