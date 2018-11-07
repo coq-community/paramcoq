@@ -9,12 +9,8 @@ env:
   matrix:
   - COQ_IMAGE="coqorg/coq:8.7"
   - COQ_IMAGE="coqorg/coq:8.8"
+  - COQ_IMAGE="coqorg/coq:8.9"
   - COQ_IMAGE="coqorg/coq:dev"
-
-matrix:
-  allow_failures:
-  - env: COQ_IMAGE="coqorg/coq:dev"
-  fast_finish: true
 
 install: |
   # Run the COQ container and display build metadata
@@ -35,7 +31,7 @@ script:
     set -ex
     sudo chown -R coq:coq /home/coq/paramcoq
     make
-    cd test-suite; make
+    cd test-suite; make examples
     "
 - docker stop COQ  # optional
 - echo -en 'travis_fold:end:paramcoq.build\\r'

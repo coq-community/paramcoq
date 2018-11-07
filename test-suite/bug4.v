@@ -45,7 +45,9 @@ with sub_mask_carry (xx yy : positive) {struct yy} : BinPosDef.Pos.mask :=
   | 1%positive => BinPosDef.Pos.IsNeg
   end.
 
+(*
 Set Parametricity Debug.
+*)
 
 Ltac destruct_reflexivity := 
   intros ; repeat match goal with 
