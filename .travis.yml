@@ -12,11 +12,6 @@ env:
   - COQ_IMAGE="coqorg/coq:8.9"
   - COQ_IMAGE="coqorg/coq:dev"
 
-matrix:
-  allow_failures:
-  - env: COQ_IMAGE="coqorg/coq:dev"
-  fast_finish: true
-
 install: |
   # Run the COQ container and display build metadata
   docker run -d -i --init --name=COQ -v ${TRAVIS_BUILD_DIR}:/home/coq/paramcoq -w /home/coq/paramcoq ${COQ_IMAGE}
