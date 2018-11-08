@@ -1104,7 +1104,7 @@ and translate_mind_param order evd env (l : (Constr.constr, Constr.constr) Conte
   let rec aux env acc = function
      | [] -> acc
      | (Context.Rel.Declaration.LocalDef (x, def, typ) as decl) :: tl ->
-       let x_R = Context.Rel.Declaration.LocalDef (translate_name order x, etoc @@ translate order evd env def, etoc @@ relation order evd env typ) in
+       let x_R = Context.Rel.Declaration.LocalDef (translate_name order x, etoc @@ lift order @@ translate order evd env def, etoc @@ relation order evd env typ) in
        let env = push_rel decl env in
        let x_i = range (fun k ->
                  Context.Rel.Declaration.LocalDef (prime_name order k x, etoc @@ lift k (prime !evd order k def), etoc @@ lift k (prime !evd order k typ))) order in
