@@ -1100,26 +1100,15 @@ let rec translate_mind_body name order evdr env kn b inst =
 
 
 and translate_mind_param order evd env (l : (Constr.constr, Constr.constr) Context.Rel.pt) =
-  let etoc c = to_constr !evd c in
-  let rec aux env acc = function
-     | [] -> acc
-     | (Context.Rel.Declaration.LocalDef (x, def, typ) as decl) :: tl ->
-       let x_R = Context.Rel.Declaration.LocalDef (translate_name order x, etoc @@ lift order @@ translate order evd env def, etoc @@ relation order evd env typ) in
-       let env = push_rel decl env in
-       let x_i = range (fun k ->
-                 Context.Rel.Declaration.LocalDef (prime_name order k x, etoc @@ lift k (prime !evd order k def), etoc @@ lift k (prime !evd order k typ))) order in
-       let acc = (x_R::x_i):: acc in
-       aux env acc tl
-     | (Context.Rel.Declaration.LocalAssum (x, typ) as decl) :: tl ->
-       let x_R = Context.Rel.Declaration.LocalAssum (translate_name order x, etoc @@ relation order evd env typ) in
-       let env = push_rel decl env in
-       let x_i = range (fun k ->
-                 Context.Rel.Declaration.LocalAssum (prime_name order k x, etoc @@ lift k (prime !evd order k typ))) order in
-       let acc = (x_R::x_i):: acc in
-       aux env acc tl
-  in
-  let l = List.rev l in
-  List.flatten (aux env [] (List.map of_rel_decl l))
+  let ctoe c =
+    let x, def, typ = fromDecl c in
+    toDecl (x, Option.map of_constr def, of_constr typ) in
+  let etoc c =
+    let x, def, typ = fromDecl c in
+    toCDecl (x, Option.map (to_constr !evd) def, to_constr !evd typ) in
+  let l = List.map ctoe l in
+  let l = translate_rel_context order evd env l in
+  List.map etoc l
 
 and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params, params, env_arities, env_arities_params) e =
   let p = List.length mut_entry.mind_params_ctxt in

@@ -25,7 +25,7 @@ let toDecl (old: Name.t * ((constr) option) * constr) : rel_declaration =
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
   | None -> Context.Rel.Declaration.LocalAssum (name,typ)
 
-let fromDecl (n: rel_declaration) :  Name.t * ('a option) * 'a =
+let fromDecl (n: ('a, 'b) Context.Rel.Declaration.pt) :  Name.t * ('a option) * 'b =
   match n with
   | Context.Rel.Declaration.LocalDef (name,value,typ) -> (name,Some value,typ)
   | Context.Rel.Declaration.LocalAssum (name,typ) -> (name,None,typ)
