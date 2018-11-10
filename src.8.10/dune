@@ -1,0 +1,10 @@
+(library
+ (name paramcoq)
+ (synopsis "Coq Plugin for Parametricity")
+ (public_name coq.plugins.paramcoq)
+ (libraries coq.plugins.ltac))
+
+(rule
+ (targets abstraction.ml)
+ (deps (:pp-file abstraction.mlg) )
+ (action (run coqpp %{pp-file})))

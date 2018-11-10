@@ -196,9 +196,9 @@ let debug_mutual_inductive_entry =
       match entry.mind_entry_universes with
       | Monomorphic_ind_entry ux ->
          Univ.pr_universe_context_set UnivNames.pr_with_global_universes ux
-      | Polymorphic_ind_entry ux ->
+      | Polymorphic_ind_entry (_,ux) ->
          Univ.pr_universe_context UnivNames.pr_with_global_universes ux
-      | Cumulative_ind_entry ci -> Univ.pr_cumulativity_info UnivNames.pr_with_global_universes ci
+      | Cumulative_ind_entry (_,ci) -> Univ.pr_cumulativity_info UnivNames.pr_with_global_universes ci
     in
     let mind_entry_private_pp =
       match entry.mind_entry_private with
