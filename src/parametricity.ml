@@ -9,15 +9,17 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open Ltac_plugin
 open Util
 open Names
 open Vars
 open Environ
+open Context
 open EConstr
 open Vars
 open Debug
 
-[@@@ocaml.warning "-40"]
+[@@@ocaml.warning "-27-40-42"]
 
 let error msg = CErrors.user_err ~hdr:"Parametricity plugin" msg
 
@@ -30,20 +32,16 @@ module CoqConstants = struct
   let add_constraints evdref univ =
     let env = Global.env () in
     let extract_type_sort poly_ref =
-      let evd, poly_ref = Evarutil.new_global !evdref poly_ref in
-      evdref := evd;
+      let poly_ref = Evarutil.e_new_global evdref (delayed_force poly_ref) in
       let ref_type = Retyping.get_type_of env !evdref poly_ref in
       let ref_sort =
         let _, a, _ = destProd !evdref ref_type in
         a
       in
-      match Evarconv.cumul env !evdref univ ref_sort with
-      | Some evd -> evdref := evd
-      | None -> ()
+      ignore (Evarconv.e_cumul env evdref univ ref_sort)
     in
     let extract_pred_sort poly_ref =
-      let evd, poly_ref = Evarutil.new_global !evdref poly_ref in
-      evdref := evd;
+      let poly_ref = Evarutil.e_new_global evdref (delayed_force poly_ref) in
       let ref_type = Retyping.get_type_of env !evdref poly_ref in
       let ref_sort =
         let _, _, typ = destProd !evdref ref_type in
@@ -51,14 +49,10 @@ module CoqConstants = struct
         let _, a, _ = destProd !evdref typ in
         snd (decompose_prod !evdref a)
       in
-      match Evarconv.cumul env !evdref univ ref_sort with
-      | Some evd -> evdref := evd
-      | None -> ()
+      ignore (Evarconv.e_cumul env evdref univ ref_sort)
     in
-    List.iter
-      extract_type_sort
-      Program.([coq_eq_ind (); coq_eq_refl (); coq_eq_rect ()]);
-    extract_pred_sort (Program.coq_eq_rect ())
+    List.iter extract_type_sort [Program.coq_eq_ind; Program.coq_eq_refl; Program.coq_eq_rect];
+    extract_pred_sort Program.coq_eq_rect
 
   let eq evdref args =
     Program.papp evdref Program.coq_eq_ind args
@@ -91,7 +85,7 @@ let hyps_from_rel_context env =
     | (_, None, _) :: tl -> aux (depth :: acc) (depth + 1) tl
     | _ :: tl -> aux acc (depth + 1) tl
   in
-  let nc: (Name.t * ((constr) option) * constr) list =
+  let nc: (Names.name * ((constr) option) * constr) list =
     (List.map fromDecl rctx) in
   aux [] 1 nc
 
@@ -149,7 +143,7 @@ let prop_or_type _env _evdr s = s
  * c[x_index/x,y_index/y, z_index/z] and is well-defined in:
  *    x_1, x_2, ...,x_order, x_R, y_1, y_2, ..., y_order, y_R, z1, z_2, ..., z_order, z_R
  * *)
-let prime sigma order index c =
+let rec prime sigma order index c =
   let rec aux depth c = match kind sigma c with
     | Rel i ->
         if i <= depth then c else mkRel (depth + (order + 1) * (i - depth)  - index)
@@ -177,9 +171,9 @@ let prime_string order value x =
      | n -> Printf.sprintf "%s_%d" x (n-1)
 
 (* The translation of identifiers. *)
-let translate_id order y = (Id.of_string @@ translate_string order @@ Id.to_string @@ y)
+let translate_id order y = (id_of_string @@ translate_string order @@ string_of_id @@ y)
 (* The prime of identifiers. *)
-let prime_id order value y = (Id.of_string @@ prime_string order value @@ Id.to_string @@ y)
+let prime_id order value y = (id_of_string @@ prime_string order value @@ string_of_id @@ y)
 (* The prime of names. *)
 let prime_name order value = function
   | Name y -> Name  (prime_id order value y)
@@ -244,6 +238,10 @@ let substnl_rel_context subst n sign =
 
 let substl_rel_context subst = substnl_rel_context subst 0
 
+
+(* A variant of mkApp that reduces redexes. *)
+let mkBetaApp (f, v) = Reduction.beta_appvect f v
+
 (* If [c] is well-formed type in env [G], then [generalize G c] returns [forall G.c]. *)
 let generalize_env (env : Environ.env) (init : types) =
   let l = rel_context env in
@@ -256,11 +254,11 @@ let abstract_env (env : Environ.env) (init : constr) =
 
 let mkFreshInd env evd c =
   let evd', res = Evd.fresh_inductive_instance env !evd c in
-  evd := evd'; of_constr @@ Constr.mkIndU res
+  evd := evd'; of_constr @@ Term.mkIndU res
 
 let mkFreshConstruct env evd c =
   let evd', res = Evd.fresh_constructor_instance env !evd c in
-  evd := evd'; of_constr @@ Constr.mkConstructU res
+  evd := evd'; of_constr @@ Term.mkConstructU res
 
 (* prodn n [xn:Tn;..;x1:T1;Gamma] b = (x1:T1)..(xn:Tn)b *)
 let prodn n env b =
@@ -289,7 +287,7 @@ let compose_lam l b = lamn (List.length l) l b
 (* G |- t ---> |G|, x1, x2 |- [x1,x2] in |t| *)
 let rec relation order evd env (t : constr) : constr =
   debug_string [`Relation] (Printf.sprintf "relation %d evd env t" order);
-  debug_evar_map [`Relation]  "evd =" env !evd;
+  debug_evar_map [`Relation]  "evd =" !evd;
   debug [`Relation] "input =" env !evd t;
   let res = match kind !evd t with
     | Sort _s -> fold_nat (fun _ -> mkArrow (mkRel order)) (prop_or_type env evd t) order
@@ -328,7 +326,7 @@ let rec relation order evd env (t : constr) : constr =
   in
  if !debug_mode && List.exists (fun x -> List.mem x [`Relation]) debug_flag then begin
     debug_string [`Relation] (Printf.sprintf "exit relation %d evd env t" order);
-    debug_evar_map [`Relation]  "evd =" env !evd;
+    debug_evar_map [`Relation]  "evd =" !evd;
     debug [`Relation] "input =" env !evd t;
     debug_string [`Relation] (Printf.sprintf "input has cast : %b" (has_cast !evd t));
     debug_mode := false;
@@ -345,7 +343,7 @@ let rec relation order evd env (t : constr) : constr =
 (* G |- t ---> |G| |- |t| *)
 and translate order evd env (t : constr) : constr =
   debug_string [`Translate] (Printf.sprintf "translate %d evd env t" order);
-  debug_evar_map [`Translate]  "evd =" env !evd;
+  debug_evar_map [`Translate]  "evd =" !evd;
   debug [`Translate] "input =" env !evd t;
   let res = match kind !evd t with
     | Rel n -> mkRel ( (n - 1) * (order + 1) + 1)
@@ -426,13 +424,13 @@ and translate order evd env (t : constr) : constr =
         translate_cofix order evd env t
 
     | Proj (p, c) ->
-        mkProj (Projection.map (fun cte -> Names.MutInd.make1 (Names.Constant.canonical (Globnames.destConstRef (Relations.get_constant order (Names.Constant.make1 (Names.MutInd.canonical cte)))))) p, translate order evd env c)
+        mkProj (Projection.map (fun cte -> Globnames.destConstRef (Relations.get_constant order cte)) p, translate order evd env c)
 
     | _ -> not_implemented ~reason:"trapfall" env !evd t
  in
   if !debug_mode && List.exists (fun x -> List.mem x [`Translate]) debug_flag then begin
     debug_string [`Translate] (Printf.sprintf "exit translate %d evd env t" order);
-    debug_evar_map [`Translate]  "evd =" env !evd;
+    debug_evar_map [`Translate]  "evd =" !evd;
     debug [`Translate] "input =" env !evd t;
     debug_string [`Translate] (Printf.sprintf "input has cast : %b" (has_cast !evd t));
     debug_mode := false;
@@ -454,10 +452,10 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
       let cb = lookup_constant kn env in
       Declarations.(match cb.const_body with
         | Def _ ->
-            let (value, _, constraints) = constant_value_and_type env (kn,names) in
+            let (value, constraints) = constant_value env (kn,names) in
             let evd' = Evd.add_constraints !evd constraints in
             evd := evd';
-            translate order evd env (of_constr (Option.get value))
+            translate order evd env (of_constr value)
         | OpaqueDef op ->
             let table = Environ.opaque_tables env in
             let typ = Typeops.type_of_constant_in env (kn,names) in
@@ -475,11 +473,10 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             let pred = mkLambda (Anonymous, etyp, substl (range (fun _ -> mkRel 1) order) (relation order evd env etyp)) in
             let res = translate order evd env edef in
             let uf_opaque_stmt = CoqConstants.eq evd [| etyp; edef; fold|] in
-            let evd', sort = Typing.sort_of env !evd etyp in
-            evd := evd';
+            let sort = Typing.e_sort_of env evd etyp in
             let proof_opaque =
               try
-                if Sorts.is_prop sort then
+                if Term.is_prop_sort sort then
                   (debug [`ProofIrrelevance] "def =" env !evd edef;
                   debug [`ProofIrrelevance] "fold =" env !evd fold;
                   CoqConstants.proof_irrelevance evd [| etyp; edef; fold |])
@@ -561,7 +558,7 @@ and translate_cofix order evd env t =
       let k = k-1 in
       let fix_k = lift (n*order + k) (prime !evd order k fix) in
       let typ_k = lift (n*order + k) (prime !evd order k typ) in
-      let acc = mkLetIn (Name (Id.of_string (Printf.sprintf "fix_%s_%d" name (k+1))),
+      let acc = mkLetIn (Name (id_of_string (Printf.sprintf "fix_%s_%d" name (k+1))),
                            fix_k, typ_k, acc) in
       letfix name fix typ n k acc
   in
@@ -604,7 +601,7 @@ and translate_cofix order evd env t =
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
 
-  (* env_rec is the environement under fixpoints. *)
+  (* env_rec is the environement under fipoints. *)
   let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =
@@ -662,7 +659,7 @@ and translate_fix order evd env t =
       let k = k-1 in
       let fix_k = lift (n*order + k) (prime !evd order k fix) in
       let typ_k = lift (n*order + k) (prime !evd order k typ) in
-      let acc = mkLetIn (Name (Id.of_string (Printf.sprintf "fix_%s_%d" name (k+1))),
+      let acc = mkLetIn (Name (id_of_string (Printf.sprintf "fix_%s_%d" name (k+1))),
                            fix_k, typ_k, acc) in
       letfix name fix typ n k acc
   in
@@ -706,7 +703,7 @@ and translate_fix order evd env t =
      let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
-  (* env_rec is the environement under fixpoints. *)
+  (* env_rec is the environement under fipoints. *)
   let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =
@@ -884,15 +881,13 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   debug [`Fix] "source =" env !evdr source;
   debug [`Fix] "target =" env !evdr target;
   debug [`Fix] "typ =" env !evdr typ;
-  let env_R =
-    if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
-      let env_R = translate_env order evdr env in
-      let rc_order = rev_range (fun k -> (Name (Id.of_string (Printf.sprintf "rel_%d" k))), None,
-                                         lift k (prime !evdr order k typ)) order in
-      let env_R' = push_rel_context (List.map toDecl rc_order) env_R in
-      debug [`Fix] "typ_R =" env_R' !evdr typ_R;
-      env_R
-    end else env in
+  if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
+    let env_R = translate_env order evdr env in
+    let rc_order = rev_range (fun k -> (Name (id_of_string (Printf.sprintf "rel_%d" k))), None,
+                         lift k (prime !evdr order k typ)) order in
+    let env_R = push_rel_context (List.map toDecl rc_order) env_R in
+    debug [`Fix] "typ_R =" env_R !evdr typ_R
+  end;
   let instantiate_fixpoint_in_rel_context rc =
     let (ri, k), stuff = fix in
     let pos = depth in
@@ -906,18 +901,13 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   let env_rc = rel_context env in
   let env_rc = instantiate_fixpoint_in_rel_context (List.map fromDecl env_rc) in
   let path = CoqConstants.eq evdr [| typ; source; target|] in
-  debug [`Fix] "path" env !evdr path;
   let gen_rc, new_vec, path = weaken_unused_free_rels env_rc !evdr path in
-  let gen_path_type = it_mkProd_or_LetIn path  gen_rc in
-  debug [`Fix] "gen_path_type" Environ.empty_env !evdr gen_path_type;
-  let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path_type in
+  let gen_path = it_mkProd_or_LetIn path  gen_rc in
+  debug [`Fix] "gen_path_type" Environ.empty_env !evdr gen_path;
+  let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
   evdr := evd;
-  let let_gen acc = mkLetIn (Name (Id.of_string "gen_path"), hole, gen_path_type, acc) in
-  let env_R' =
-    let decl_gen_path = Context.Rel.Declaration.LocalDef (Name (Id.of_string "gen_path"),hole,gen_path_type) in
-    push_rel decl_gen_path env_R in
-  let res1 =
-    (fold_nat (fun k acc ->
+  let let_gen acc = mkLetIn (Name (id_of_string "gen_path"), hole, gen_path, acc) in
+  let_gen @@ (fold_nat (fun k acc ->
     let pred_sub =
       (range (fun x -> lift 1 (prime evd order (k+1+x) target)) (order-1 - k))
       @ [ mkRel 1 ]
@@ -926,8 +916,7 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
     let sort = Retyping.get_type_of env !evdr typ in
     CoqConstants.add_constraints evdr sort;
     let index = lift 1 (prime evd order k typ) in
-    let pred = mkLambda (Name (Id.of_string "x"), index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
-    debug [`Fix] "pred = " env_R' !evdr pred;
+    let pred = mkLambda (Name (id_of_string "x"), index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
     let base = lift 1 (prime evd order k source) in
     let endpoint = lift 1 (prime evd order k target) in
     let path = mkApp (mkRel 1,
@@ -936,12 +925,7 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
     CoqConstants.transport evdr
           [| index;
              base;
-             pred; acc; endpoint; path |]) (lift 1 acc) order) in
-  let res = let_gen @@ res1 in
-  debug [`Fix] "res1 = " env_R' !evdr res1;
-  debug [`Fix] "gen_path_type" env_R !evdr gen_path_type;
-  debug [`Fix] "res = " env_R !evdr res;
-  res
+             pred; acc; endpoint; path |]) (lift 1 acc) order)
 
 and weaken_unused_free_rels env_rc sigma term =
   (* Collect the dependencies with [vars] in a rel_context. *)
@@ -998,7 +982,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
   debug [`Fix] "typ =" env !evdr typ;
   if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
     let env_R = translate_env order evdr env in
-    let rc_order = rev_range (fun k -> (Name (Id.of_string (Printf.sprintf "rel_%d" k))), None,
+    let rc_order = rev_range (fun k -> (Name (id_of_string (Printf.sprintf "rel_%d" k))), None,
                          lift k (prime !evdr order k typ)) order in
     let env_R = push_rel_context (List.map toDecl rc_order) env_R in
     debug [`Fix] "typ_R =" env_R !evdr typ_R
@@ -1019,7 +1003,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
   debug [`Fix] "gen_path_type" env !evdr gen_path;
   let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
   evdr := evd;
-  let let_gen acc = mkLetIn (Name (Id.of_string "gen_path"), hole, gen_path, acc) in
+  let let_gen acc = mkLetIn (Name (id_of_string "gen_path"), hole, gen_path, acc) in
   let_gen @@ (fold_nat (fun k acc ->
     let pred_sub =
       (range (fun x -> lift 1 (prime evd order (k+1+x) target)) (order-1 - k))
@@ -1027,7 +1011,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
       @ (range (fun x -> lift 1 (prime evd order x source)) k)
     in
     let index = lift 1 (prime evd order k typ) in
-    let pred = mkLambda (Name (Id.of_string "x"), index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
+    let pred = mkLambda (Name (id_of_string "x"), index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
     let base = lift 1 (prime evd order k source) in
     let endpoint = lift 1 (prime evd order k target) in
     let path = mkApp (mkRel 1,
@@ -1047,6 +1031,12 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
 open Entries
 open Declarations
 
+let map_local_entry f = function
+  | Entries.LocalDefEntry  c -> Entries.LocalDefEntry (f c)
+  | Entries.LocalAssumEntry c -> Entries.LocalAssumEntry (f c)
+
+let constr_of_local_entry = function Entries.LocalDefEntry c | Entries.LocalAssumEntry c -> c
+
 (* Translation of inductives. *)
 
 let rec translate_mind_body name order evdr env kn b inst =
@@ -1054,7 +1044,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   (* let env = push_context b.mind_universes env in *)
   debug_string [`Inductive] "computing envs ...";
   debug_env [`Inductive] "translate_mind, env = \n" env !evdr;
-  debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
+  debug_evar_map [`Inductive] "translate_mind, evd = \n" !evdr;
   let envs =
     let params = subst_instance_context inst b.mind_params_ctxt in
     let env_params = push_rel_context (List.map of_rel_decl params) env in
@@ -1066,7 +1056,7 @@ let rec translate_mind_body name order evdr env kn b inst =
            Inductive.constrained_type_of_inductive env ((b, ind), inst)
         in
         let env = push_rel (toDecl (Names.Name typename, None, (of_constr full_arity))) env in
-        let env = Environ.add_constraints cst env in
+        let env = add_constraints cst env in
         env
       ) env (Array.to_list b.mind_packets)
     in
@@ -1084,31 +1074,51 @@ let rec translate_mind_body name order evdr env kn b inst =
       (fun i x -> translate_mind_inductive name order evdr env (kn,i) b inst envs x)
       (Array.to_list b.mind_packets)
   in
-  debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
-  let poly = match b.mind_universes with Monomorphic_ind _ -> false | _ -> true in
-  let univs = Evd.ind_univ_entry ~poly !evdr in
+  debug_evar_map [`Inductive] "translate_mind, evd = \n" !evdr;
+  let ctx = Evd.universe_context !evdr in
   let res = {
     mind_entry_record = None;
     mind_entry_finite = b.mind_finite;
     mind_entry_params = mind_entry_params_R;
     mind_entry_inds = mind_entry_inds_R;
-    mind_entry_universes = univs;
+    (* XXX: Review *)
+    (* mind_entry_polymorphic = b.mind_polymorphic; *)
+    mind_entry_universes =
+      (match b.mind_universes with
+       | Monomorphic_ind _ -> Monomorphic_ind_entry (snd ctx)
+       | Polymorphic_ind _ -> Polymorphic_ind_entry (snd ctx)
+       (* XXX We cannot do this yet *)
+       | Cumulative_ind _ -> Polymorphic_ind_entry (snd ctx)
+       (* Cumulative_ind_entry (snd ctx) *)
+      );
     mind_entry_private = b.mind_private;
   } in
   Debug.debug_mutual_inductive_entry !evdr res;
   res
 
 
-and translate_mind_param order evd env (l : (Constr.constr, Constr.constr) Context.Rel.pt) =
-  let ctoe c =
-    let x, def, typ = fromDecl c in
-    toDecl (x, Option.map of_constr def, of_constr typ) in
-  let etoc c =
-    let x, def, typ = fromDecl c in
-    toCDecl (x, Option.map (to_constr !evd) def, to_constr !evd typ) in
-  let l = List.map ctoe l in
-  let l = translate_rel_context order evd env l in
-  List.map etoc l
+and translate_mind_param order evd env (l : Context.Rel.t) =
+  let etoc c = to_constr !evd c in
+  let rec aux env acc = function
+     | [] -> acc
+     | (x, (Some def as op), hd)::tl ->
+       let x_R = (translate_name order x, Entries.LocalDefEntry (etoc @@ translate order evd env def)) in
+       let env = push_rel (toDecl (x, op, hd)) env in
+       let x_i = range (fun k ->
+                 (prime_name order k x, Entries.LocalDefEntry (etoc @@ lift k (prime !evd order k def)))) order in
+       let acc = (x_R::x_i):: acc in
+       aux env acc tl
+     | (x,None,hd)::tl ->
+           let x_R = (translate_name order x, Entries.LocalAssumEntry (etoc @@ relation order evd env hd)) in
+           let env = push_rel (toDecl (x, None, hd)) env in
+           let x_i = range (fun k ->
+                     (prime_name order k x, Entries.LocalAssumEntry (etoc @@ lift k (prime !evd order k hd)))) order in
+           let acc = (x_R::x_i):: acc in
+           aux env acc tl
+  in
+  let l = List.rev l in
+  List.map (function (Name x,c) -> (x, c) | _ -> failwith "anonymous param")
+    (List.flatten (aux env [] (List.map fromDecl (List.map of_rel_decl l))))
 
 and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params, params, env_arities, env_arities_params) e =
   let p = List.length mut_entry.mind_params_ctxt in

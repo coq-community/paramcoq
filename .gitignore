@@ -36,5 +36,5 @@
 *.cmxs
 *.cmxa
 
-# coqpp generated file
+# camlp5 generated file
 src/abstraction.ml
