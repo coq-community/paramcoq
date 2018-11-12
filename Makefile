@@ -9,8 +9,19 @@ src.$(COQVV)/paramcoq_mod.ml: src.$(COQVV)/paramcoq.mlpack
 
 pre-makefile:: src.$(COQVV)/paramcoq_mod.ml
 
+ifeq (, $(shell which coqpp))
+ PPEXT=ml4
+else
+ # 8.9 doesn't supports the attribute coqpp syntax
+ ifeq ($(COQVV),8.9)
+   PPEXT=ml4
+ else
+   PPEXT=mlg
+ endif
+endif
+
 Make.cfg.local: Make.cfg
-	sed -e "s/src.version/src.$(COQVV)/" $< > $@
+	sed -e "s/src.version/src.$(COQVV)/;s/coqpp.ext/$(PPEXT)/" $< > $@
 
 ifeq ($(COQVV),8.7)
 this-config::

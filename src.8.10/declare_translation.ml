@@ -319,7 +319,7 @@ let translateFullName ~fullname arity (kername : Names.KerName.t) : string =
     (Names.ModPath.to_string
      @@ Names.KerName.modpath
      @@ kername) in
-  let plstr = Str.split (Str.regexp ("\.")) pstr in
+  let plstr = Str.split (Str.regexp ("\\.")) pstr in
   if fullname then
     (String.concat "_o_" (plstr@[nstr]))
   else nstr
