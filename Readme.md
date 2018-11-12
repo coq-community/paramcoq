@@ -16,8 +16,8 @@ One way to test the plugin is to follow the following steps:
 * Retrieve the plugin and compile it:
 
         git clone ...
-        git checkout v8.x  # checkout branch according to Coq version
         cd paramcoq 
+        git checkout v8.x  # checkout branch according to Coq version
         make
         make install
 
