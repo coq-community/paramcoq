@@ -54,7 +54,6 @@ Parametricity Module Logic.
 Parametricity Module Datatypes.
 
 Parametricity Module Logic_Type.
-Parametricity Module Decimal.
 Parametricity Module Nat.
 
 Parametricity Module Specif.
