@@ -6,5 +6,5 @@
 
 (rule
  (targets abstraction.ml)
- (deps (:pp-file abstraction.mlg) )
- (action (run coqpp %{pp-file})))
+ (deps (:pp-file abstraction.ml4) )
+ (action (run camlp5 %{pp-file})))
