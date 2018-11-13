@@ -19,7 +19,7 @@ let (set_parametricity_tactic, get_parametricity_tactic, print_parametricity_tac
     Tactic_option.declare_tactic_option "Parametricity tactic"
 
 module IntMap = Map.Make(Int)
-module GMap = Map.Make(GlobRef.Ordered)
+module GMap = Map.Make(Globnames.RefOrdered)
 
 
 let initial_translations = GMap.empty
@@ -42,7 +42,7 @@ let cache_relation (_, (n, x, x_R)) =
   add n (GMap.add x x_R)
 
 let discharge_relation (_, (n, x, x_R)) = 
-  Some (n, x, x_R)
+  Some (n, Lib.discharge_global x, Lib.discharge_global x_R)
 
 let subst_relation (subst, (n, x, x_R)) = 
     (n, subst_global_reference subst x, subst_global_reference subst x_R)

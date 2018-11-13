@@ -25,7 +25,7 @@ let toDecl (old: Name.t * ((constr) option) * constr) : rel_declaration =
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
   | None -> Context.Rel.Declaration.LocalAssum (name,typ)
 
-let fromDecl (n: ('a, 'b) Context.Rel.Declaration.pt) :  Name.t * ('a option) * 'b =
+let fromDecl (n: rel_declaration) :  Name.t * ('a option) * 'a =
   match n with
   | Context.Rel.Declaration.LocalDef (name,value,typ) -> (name,Some value,typ)
   | Context.Rel.Declaration.LocalAssum (name,typ) -> (name,None,typ)
@@ -89,9 +89,9 @@ let debug flags (s : string) env evd c =
          ++ Printer.pr_econstr_env env evd c))
     with e -> Feedback.(msg_notice (str (Printf.sprintf "Caught exception while debugging '%s'" (Printexc.to_string e))))
 
-let debug_evar_map flags s env evd =
+let debug_evar_map flags s evd =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then (
-    Feedback.msg_info Pp.(str s ++ Termops.pr_evar_map ~with_univs:true None env evd))
+    Feedback.msg_info Pp.(str s ++ Termops.pr_evar_map ~with_univs:true None evd))
 
 let debug_string flags s =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then
@@ -126,7 +126,7 @@ let debug_case_info flags ci =
 
 let debug_rel_context flags s env l =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then
-    Feedback.msg_notice Pp.(str s ++ (Termops.Internal.print_rel_context (push_rel_context l env)))
+    Feedback.msg_notice Pp.(str s ++ (Termops.print_rel_context (push_rel_context l env)))
 
 let not_implemented ?(reason = "no reason") env evd t =
   debug [`Not_implemented] (Printf.sprintf "not implemented (%s):" reason) env evd t;
@@ -163,16 +163,18 @@ let debug_mutual_inductive_entry =
     debug_string all "env_params:"
     ;
     let env_params =
-      List.fold_left (fun acc decl ->
-          debug_env all "acc = " acc evd;
-          match decl with
-          | Context.Rel.Declaration.LocalAssum (id, typ) ->
+      List.fold_left (fun acc ->
+          function
+          | (id, Entries.LocalAssumEntry typ) ->
+             debug_env all "acc = " acc evd;
              debug all "typ = " acc evd (of_constr typ);
-             Environ.push_rel decl acc
-          | Context.Rel.Declaration.LocalDef (id, def, typ) ->
+             Environ.push_rel (toCDecl (Name id, None, typ)) acc
+          | (id, Entries.LocalDefEntry def) ->
+             debug_env all "acc = " acc evd;
              debug all "def = " acc evd (of_constr def);
-             debug all "typ = " acc evd (of_constr typ);
-             Environ.push_rel decl acc)
+             let edef = EConstr.of_constr def in
+             Environ.push_rel (toCDecl (Name id, Some def,
+                                        EConstr.Unsafe.to_constr (Typing.unsafe_type_of acc evd edef))) acc)
        (Global.env ()) (List.rev entry.mind_entry_params)
     in
     debug_string all "arities:";
@@ -196,9 +198,9 @@ let debug_mutual_inductive_entry =
       match entry.mind_entry_universes with
       | Monomorphic_ind_entry ux ->
          Univ.pr_universe_context_set UnivNames.pr_with_global_universes ux
-      | Polymorphic_ind_entry (_,ux) ->
+      | Polymorphic_ind_entry ux ->
          Univ.pr_universe_context UnivNames.pr_with_global_universes ux
-      | Cumulative_ind_entry (_,ci) -> Univ.pr_cumulativity_info UnivNames.pr_with_global_universes ci
+      | Cumulative_ind_entry ci -> Univ.pr_cumulativity_info UnivNames.pr_with_global_universes ci
     in
     let mind_entry_private_pp =
       match entry.mind_entry_private with

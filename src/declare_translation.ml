@@ -32,7 +32,7 @@ let default_continuation = ignore
 
 let parametricity_close_proof () =
   let proof_obj, terminator = Proof_global.close_proof ~keep_body_ucst_separate:false (fun x -> x) in
-  let opacity = if !ongoing_translation_opacity then Proof_global.Opaque else Proof_global.Transparent in
+  let opacity = if !ongoing_translation_opacity then Vernacexpr.Opaque else Proof_global.Transparent in
   Proof_global.discard_current ();
   ongoing_translation := false;
   Proof_global.apply_terminator terminator (Proof_global.Proved (opacity,None,proof_obj))
@@ -40,7 +40,7 @@ let parametricity_close_proof () =
 let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
   debug Debug.all "add_definition, typ  = " env evd typ;
-  debug_evar_map Debug.all "add_definition, evd  = " env evd;
+  debug_evar_map Debug.all "add_definition, evd  = " evd;
   let init_tac =
     let open Proofview in
     let typecheck = true in
@@ -58,7 +58,7 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   end
 
 let declare_abstraction ?(opaque = false) ?(continuation = default_continuation) ?kind arity evdr env a name =
-  Debug.debug_evar_map Debug.all "declare_abstraction, evd  = " env !evdr;
+  Debug.debug_evar_map Debug.all "declare_abstraction, evd  = " !evdr;
   let program_mode_before = Flags.is_program_mode () in
   Obligations.set_program_mode !Parametricity.program_mode;
   debug [`Abstraction] "declare_abstraction, a =" env !evdr a;
@@ -72,7 +72,7 @@ let declare_abstraction ?(opaque = false) ?(continuation = default_continuation)
     let evdr = ref evd in
     let a_R = translate arity evdr env a in
     debug [`Abstraction] "a_R = " env !evdr a_R;
-    debug_evar_map Debug.all "abstraction, evar_map = " env !evdr;
+    debug_evar_map Debug.all "abstraction, evar_map = " !evdr;
     !evdr, a_R
   in
   let evd = !evdr in
@@ -103,7 +103,7 @@ let declare_inductive name ?(continuation = default_continuation) arity evd env 
   debug_string [`Inductive] "Translating mind body ...";
   let translation_entry = Parametricity.translate_mind_body name arity evd env mut_ind mut_body inst in
   debug_string [`Inductive] ("Translating mind body ... done.");
-  debug_evar_map [`Inductive] "evar_map inductive " env !evd;
+  debug_evar_map [`Inductive] "evar_map inductive " !evd;
   let size = Declarations.(Array.length mut_body.mind_packets) in
   let mut_ind_R = ComInductive.declare_mutual_inductive_with_eliminations translation_entry
                   Names.Id.Map.empty [] in
@@ -168,7 +168,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
      Names.Id.of_string name_R
   in
   let sigma = !evd in
-  debug_evar_map [`Realizer] "ear_map =" env sigma;
+  debug_evar_map [`Realizer] "ear_map =" sigma;
   let hook = Lemmas.mk_hook (fun _ dcl ->
     Pp.(msg_info (str (Printf.sprintf "'%s' is now a registered translation." (Names.Id.to_string name))));
     Relations.declare_relation arity gref dcl;
@@ -229,7 +229,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
      | (lab, SFBconst cb) when (match cb.const_body with OpaqueDef _ -> false | Undef _ -> true | _ -> false) ->
        let evd, env = Pfedit.get_current_context () in
        let evd = ref evd in
-       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
+       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
@@ -247,7 +247,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
        let evdr, env = Pfedit.get_current_context () in
        let evdr = ref evdr in
-       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
+       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
@@ -269,7 +269,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
      | (lab, SFBmind _) ->
        let evdr, env = Pfedit.get_current_context () in
        let evdr = ref evdr in
-       let mut_ind = Mod_subst.mind_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
+       let mut_ind = Mod_subst.mind_of_delta_kn mb.mod_delta (Names.KerName.make2 mp lab) in
        let ind = (mut_ind, 0) in
        if try ignore (Relations.get_inductive arity ind); true with Not_found -> false then
          continuation ()
@@ -319,7 +319,7 @@ let translateFullName ~fullname arity (kername : Names.KerName.t) : string =
     (Names.ModPath.to_string
      @@ Names.KerName.modpath
      @@ kername) in
-  let plstr = Str.split (Str.regexp ("\\.")) pstr in
+  let plstr = Str.split (Str.regexp ("\.")) pstr in
   if fullname then
     (String.concat "_o_" (plstr@[nstr]))
   else nstr
@@ -401,18 +401,18 @@ let command_reference_recursive ?(continuation = default_continuation) ?(fullnam
      Globnames.IndRef ind
   in
   let rec fold_sort graph visited nexts f acc =
-    Names.GlobRef.Set_env.fold (fun ref ((visited, acc) as visacc) ->
+    Refset_env.fold (fun ref ((visited, acc) as visacc) ->
           let ref_ind = inductive_of_constructor ref in
-          if Names.GlobRef.Set_env.mem ref_ind visited
+          if Refset_env.mem ref_ind visited
           || Relations.is_referenced arity ref_ind  then visacc else
-          let nexts = Names.GlobRef.Map_env.find ref graph in
-          let visited = Names.GlobRef.Set_env.add ref_ind visited in
+          let nexts = Refmap_env.find ref graph in
+          let visited = Refset_env.add ref_ind visited in
           let visited, acc = fold_sort graph visited nexts f acc in
           let acc = f ref_ind acc in
           (visited, acc)
      ) nexts (visited, acc)
   in
-  let _, dep_refs = fold_sort graph Names.GlobRef.Set_env.empty direct (fun x l -> (inductive_of_constructor x)::l) [] in
+  let _, dep_refs = fold_sort graph Refset_env.empty direct (fun x l -> (inductive_of_constructor x)::l) [] in
   let dep_refs = List.rev dep_refs in
   (* DEBUG: *)
   (* Pp.(msg_info (str "DepRefs:"));
