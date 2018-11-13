@@ -35,3 +35,6 @@
 *.cmx
 *.cmxs
 *.cmxa
+
+# camlp5 generated file
+src/abstraction.ml
