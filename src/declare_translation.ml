@@ -31,11 +31,11 @@ let obligation_message () =
 let default_continuation = ignore
 
 let parametricity_close_proof () =
-  let proof_obj, terminator = Proof_global.close_proof ~keep_body_ucst_separate:false (fun x -> x) in
-  let opacity = if !ongoing_translation_opacity then Proof_global.Opaque else Proof_global.Transparent in
+  let opaque = if !ongoing_translation_opacity then Proof_global.Opaque else Proof_global.Transparent in
+  let proof_obj, terminator = Proof_global.close_proof ~opaque ~keep_body_ucst_separate:false (fun x -> x) in
   Proof_global.discard_current ();
   ongoing_translation := false;
-  Proof_global.apply_terminator terminator (Proof_global.Proved (opacity,None,proof_obj))
+  Proof_global.apply_terminator terminator (Proof_global.Proved (opaque,None,proof_obj))
 
 let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
