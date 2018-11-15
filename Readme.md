@@ -1,7 +1,7 @@
 Paramcoq
 ========
 
-[![Build Status](https://travis-ci.com/coq-community/paramcoq.svg?branch=master)](https://travis-ci.com/coq-community/paramcoq)
+[![Build Status](https://travis-ci.com/coq-community/paramcoq.svg?branch=master)](https://travis-ci.com/coq-community/paramcoq/branches)
 
 The plugin is still in an experimental state. 
 It is not very user friendly (lack of good error messages) and still contains bugs. 
@@ -16,7 +16,8 @@ One way to test the plugin is to follow the following steps:
 * Retrieve the plugin and compile it:
 
         git clone ...
-        cd paramcoq 
+        cd paramcoq
+        git checkout master  # or v8.x depending on Coq version
         make
         make install
 
