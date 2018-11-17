@@ -1,7 +1,8 @@
 (library
  (name paramcoq)
- (synopsis "Coq Plugin for Parametricity")
  (public_name coq.plugins.paramcoq)
+ (synopsis "Coq Plugin for Parametricity")
+ (flags :standard -warn-error -3)
  (libraries coq.plugins.ltac))
 
 (rule

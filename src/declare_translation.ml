@@ -47,7 +47,11 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
     tclTHEN (Refine.refine ~typecheck begin fun sigma -> term sigma end) tactic
   in
   ongoing_translation_opacity := opaque;
-  Lemmas.start_proof name ~init_tac kind evd typ hook;
+  (* _pstate will become used upstream soon *)
+  let _pstate = Lemmas.start_proof name kind evd typ hook in
+  let _pstate = Proof_global.with_current_proof (fun _ p ->
+      Proof.run_tactic Global.(env()) init_tac p
+    ) in
   let proof = Proof_global.give_me_the_proof () in
   let is_done = Proof.is_done proof in
   if is_done then
