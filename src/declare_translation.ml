@@ -48,7 +48,7 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   in
   ongoing_translation_opacity := opaque;
   (* _pstate will become used upstream soon *)
-  let _pstate = Lemmas.start_proof name kind evd typ hook in
+  let _pstate = Lemmas.start_proof name kind evd typ ~hook in
   let _pstate = Proof_global.with_current_proof (fun _ p ->
       Proof.run_tactic Global.(env()) init_tac p
     ) in
