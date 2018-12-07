@@ -1,0 +1,2 @@
+archive: "https://github.com/coq-community/paramcoq/releases/download/v1.1.1+coq8.9/coq-paramcoq.1.1.1+coq8.9.tgz"
+checksum: TODO curl -L archive | md5sum
