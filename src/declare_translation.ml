@@ -223,7 +223,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        (Names.Id.to_string id_R) (Names.Id.to_string id));
      let mp_R = Global.start_module id_R in
      (* I have no idea what I'm doing here : *)
-     let fs = Summary.freeze_summaries ~marshallable:`No in
+     let fs = Summary.freeze_summaries ~marshallable:false in
      let _ = Lib.start_module None id_R mp_R fs in
      list_continuation
      (fun _ ->
