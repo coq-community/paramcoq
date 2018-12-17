@@ -5,7 +5,7 @@ Paramcoq
 
 The plugin is still in an experimental state. 
 It is not very user friendly (lack of good error messages) and still contains bugs. 
-But is useable enough to "translate" a large chunck of standard library. 
+But is useable enough to "translate" a large chunk of standard library. 
 
 Compilation 
 -----------
