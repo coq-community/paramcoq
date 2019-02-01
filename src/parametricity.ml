@@ -73,15 +73,6 @@ module CoqConstants = struct
     Program.papp evdref (fun () -> Coqlib.coq_reference msg ["Logic"; "ProofIrrelevance"] "proof_irrelevance") args
 end
 
-let program_mode = ref false
-let set_program_mode =
-   Goptions.declare_bool_option
-    { Goptions.optdepr  = false;
-      Goptions.optname  = "Parametricity Program";
-      Goptions.optkey   = ["Parametricity"; "Program"];
-      Goptions.optread  = (fun () -> !program_mode);
-      Goptions.optwrite = (:=) program_mode }
-
 let default_arity = 2
 
 let hyps_from_rel_context env =
