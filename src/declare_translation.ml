@@ -63,8 +63,6 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
 
 let declare_abstraction ?(opaque = false) ?(continuation = default_continuation) ?kind arity evdr env a name =
   Debug.debug_evar_map Debug.all "declare_abstraction, evd  = " env !evdr;
-  let program_mode_before = Flags.is_program_mode () in
-  Obligations.set_program_mode !Parametricity.program_mode;
   debug [`Abstraction] "declare_abstraction, a =" env !evdr a;
   let b = Retyping.get_type_of env !evdr a in
   debug [`Abstraction] "declare_abstraction, b =" env !evdr b;
@@ -98,8 +96,7 @@ let declare_abstraction ?(opaque = false) ?(continuation = default_continuation)
     | None -> Decl_kinds.Global, true, Decl_kinds.DefinitionBody Decl_kinds.Definition
     | Some kind -> kind in
   let tactic = snd (Relations.get_parametricity_tactic ()) in
-  add_definition ~tactic ~opaque ~kind ~hook name env evd a_R b_R;
-  Obligations.set_program_mode program_mode_before
+  add_definition ~tactic ~opaque ~kind ~hook name env evd a_R b_R
 
 
 let declare_inductive name ?(continuation = default_continuation) arity evd env (((mut_ind, _) as ind, inst)) =
