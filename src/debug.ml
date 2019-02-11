@@ -187,18 +187,16 @@ let debug_mutual_inductive_entry =
     in
     let mind_entry_polymorphic_pp =
       str (match entry.mind_entry_universes with
-           | Monomorphic_ind_entry _ -> "false"
-           | Polymorphic_ind_entry _ -> "true"
-           | Cumulative_ind_entry _ -> "cumulative"
+           | Monomorphic_entry _ -> "false"
+           | Polymorphic_entry _ -> "true"
           )
     in
     let mind_entry_universes_pp =
       match entry.mind_entry_universes with
-      | Monomorphic_ind_entry ux ->
+      | Monomorphic_entry ux ->
          Univ.pr_universe_context_set UnivNames.pr_with_global_universes ux
-      | Polymorphic_ind_entry (_,ux) ->
-         Univ.pr_universe_context UnivNames.pr_with_global_universes ux
-      | Cumulative_ind_entry (_,ci) -> Univ.pr_cumulativity_info UnivNames.pr_with_global_universes ci
+      | Polymorphic_entry (_,ux) ->
+         Univ.pr_universe_context ?variance:entry.mind_entry_variance UnivNames.pr_with_global_universes ux
     in
     let mind_entry_private_pp =
       match entry.mind_entry_private with

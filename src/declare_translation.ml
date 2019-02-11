@@ -241,10 +241,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        let opaque =
          match cb.const_body with OpaqueDef _ -> true | _ -> false
        in
-       let poly = match cb.Declarations.const_universes with
-         | Monomorphic_const _ -> false
-         | Polymorphic_const _ -> true
-       in
+       let poly = Declareops.constant_is_polymorphic cb in
        let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
        let evdr, env = Pfedit.get_current_context () in
        let evdr = ref evdr in
@@ -330,10 +327,7 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
   let poly, opaque =
     let cb = Global.lookup_constant constant in
     let open Declarations in
-    (match cb.const_universes with
-     | Monomorphic_const _ -> false
-     | Polymorphic_const _ -> true
-    ),
+    Declareops.constant_is_polymorphic cb,
     (match cb.const_body with Def _ -> false | _ -> true)
   in
   let name = match names with
