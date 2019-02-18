@@ -1076,14 +1076,15 @@ let rec translate_mind_body name order evdr env kn b inst =
       (Array.to_list b.mind_packets)
   in
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
-  let poly = match b.mind_universes with Monomorphic_ind _ -> false | _ -> true in
-  let univs = Evd.ind_univ_entry ~poly !evdr in
+  let poly = match b.mind_universes with Monomorphic _ -> false | _ -> true in
+  let univs = Evd.univ_entry ~poly !evdr in
   let res = {
     mind_entry_record = None;
     mind_entry_finite = b.mind_finite;
     mind_entry_params = mind_entry_params_R;
     mind_entry_inds = mind_entry_inds_R;
     mind_entry_universes = univs;
+    mind_entry_variance = None;
     mind_entry_private = b.mind_private;
   } in
   Debug.debug_mutual_inductive_entry !evdr res;
