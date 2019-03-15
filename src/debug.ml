@@ -13,19 +13,19 @@ open Names
 open EConstr
 open Pp
 
-let toCDecl (old: Name.t * ((Constr.constr) option) * Constr.constr) : (Constr.constr, Constr.constr) Context.Rel.Declaration.pt =
+let toCDecl old : (Constr.constr, Constr.constr) Context.Rel.Declaration.pt =
   let (name,value,typ) = old in
   match value with
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
   | None -> Context.Rel.Declaration.LocalAssum (name,typ)
 
-let toDecl (old: Name.t * ((constr) option) * constr) : rel_declaration =
+let toDecl old : rel_declaration =
   let (name,value,typ) = old in
   match value with
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
   | None -> Context.Rel.Declaration.LocalAssum (name,typ)
 
-let fromDecl (n: ('a, 'b) Context.Rel.Declaration.pt) :  Name.t * ('a option) * 'b =
+let fromDecl (n: ('a, 'b) Context.Rel.Declaration.pt) =
   match n with
   | Context.Rel.Declaration.LocalDef (name,value,typ) -> (name,Some value,typ)
   | Context.Rel.Declaration.LocalAssum (name,typ) -> (name,None,typ)
@@ -229,7 +229,7 @@ let debug_mutual_inductive_entry =
 
     let arities_params_env =
       let env_arities =
-        List.fold_left (fun acc (id, arity) -> Environ.push_rel (toCDecl (Name id, None, arity)) acc)
+        List.fold_left (fun acc (id, arity) -> Environ.push_rel (toCDecl (Context.make_annot (Name id) Sorts.Relevant, None, arity)) acc)
                        Environ.empty_env (List.rev arities)
       in
       Environ.push_rel_context params env_arities
