@@ -50,6 +50,8 @@ Global Parametricity Tactic := ((destruct_reflexivity; fail)
 
 Require Import ProofIrrelevance. (* for opaque terms *)
 
+Set Allow StrictProp.  (* TODO: use SProp instead of ProofIrrelevance *)
+
 Parametricity Module Logic.
 Parametricity Module Datatypes.
 
