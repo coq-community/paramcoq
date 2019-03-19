@@ -30,12 +30,14 @@ let obligation_message () =
 
 let default_continuation = ignore
 
-let parametricity_close_proof () =
+let parametricity_close_proof ~pstate =
   let opaque = if !ongoing_translation_opacity then Proof_global.Opaque else Proof_global.Transparent in
-  let proof_obj, terminator = Proof_global.close_proof ~opaque ~keep_body_ucst_separate:false (fun x -> x) in
-  Proof_global.discard_current ();
+  let proof_obj, terminator =
+    Proof_global.close_proof ~opaque ~keep_body_ucst_separate:false (fun x -> x) pstate in
+  let pstate = Proof_global.discard_current pstate in
   ongoing_translation := false;
-  Proof_global.apply_terminator terminator (Proof_global.Proved (opaque,None,proof_obj))
+  Proof_global.apply_terminator terminator (Proof_global.Proved (opaque,None,proof_obj));
+  pstate
 
 let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
@@ -47,18 +49,18 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
     tclTHEN (Refine.refine ~typecheck begin fun sigma -> term sigma end) tactic
   in
   ongoing_translation_opacity := opaque;
-  (* _pstate will become used upstream soon *)
-  let _pstate = Lemmas.start_proof name kind evd typ ~hook in
-  let _pstate = Proof_global.with_current_proof (fun _ p ->
+  let pstate = Lemmas.start_proof ~ontop:None name kind evd typ ~hook in
+  let pstate, _ = Proof_global.with_current_proof (fun _ p ->
       Proof.run_tactic Global.(env()) init_tac p
-    ) in
-  let proof = Proof_global.give_me_the_proof () in
+    ) pstate in
+  let proof = Proof_global.give_me_the_proof pstate in
   let is_done = Proof.is_done proof in
   if is_done then
-    parametricity_close_proof ()
+    parametricity_close_proof ~pstate
   else begin
     ongoing_translation := true;
-    obligation_message ()
+    obligation_message ();
+    Some pstate
   end
 
 let declare_abstraction ?(opaque = false) ?(continuation = default_continuation) ?kind arity evdr env a name =
@@ -113,8 +115,9 @@ let declare_inductive name ?(continuation = default_continuation) arity evd env 
   done;
   continuation ()
 
-let translate_inductive_command sigma arity c name =
-  let (sigma, env) = Pfedit.get_current_context () in
+let translate_inductive_command arity c name =
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
   let (sigma, c) = Constrintern.interp_open_constr env sigma c in
   let (ind, _) as pind, _ =
     try
@@ -178,11 +181,12 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
   add_definition ~tactic  ~opaque:false ~kind ~hook name env sigma real typ_R
 
 let realizer_command arity name var real =
-  let (sigma, env) = Pfedit.get_current_context () in
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
   let (sigma, var) = Constrintern.interp_open_constr env sigma var in
   Obligations.check_evars env sigma;
   let real = fun sigma -> Constrintern.interp_open_constr env sigma real in
-  declare_realizer arity (ref sigma) env name var ~real
+  ignore(declare_realizer arity (ref sigma) env name var ~real)
 
 let rec list_continuation final f l _ = match l with [] -> final ()
    | hd::tl -> f (list_continuation final f tl) hd
@@ -228,14 +232,19 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        ignore (Declaremods.end_module ()); continuation ())
      (fun continuation -> function
      | (lab, SFBconst cb) when (match cb.const_body with OpaqueDef _ -> false | Undef _ -> true | _ -> false) ->
-       let evd, env = Pfedit.get_current_context () in
-       let evd = ref evd in
        let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
        debug_string [`Module] (Printf.sprintf "axiom field: '%s'." (Names.Label.to_string lab));
-       declare_realizer ~continuation arity evd env None (mkConst cst)
+       (* As we rely on globally declared constants we need to access the
+          global env here; previously indeed there was a bug in the call to
+          Pfedit.get_current_context [it worked because we had no proof
+          state] *)
+       let env = Global.env () in
+       let evd = Evd.from_env env in
+       let evdr = ref evd in
+       ignore(declare_realizer ~continuation arity evdr env None (mkConst cst))
 
      | (lab, SFBconst cb) ->
        let opaque =
@@ -243,17 +252,17 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        in
        let poly = Declareops.constant_is_polymorphic cb in
        let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
-       let evdr, env = Pfedit.get_current_context () in
-       let evdr = ref evdr in
        let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
+       let env = Global.env () in
+       let evd = Evd.from_env env in
        let evd, ucst =
-          Evd.(with_context_set univ_rigid !evdr (UnivGen.fresh_constant_instance env cst))
+          Evd.(with_context_set univ_rigid evd (UnivGen.fresh_constant_instance env cst))
        in
        let c = mkConstU (fst ucst, EInstance.make (snd ucst)) in
-       evdr := evd;
+       let evdr = ref evd in
        let lab_R = translate_id arity (Names.Label.to_id lab) in
        debug [`Module] "field : " env !evdr c;
        (try
@@ -262,11 +271,12 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
         debug [`Module] "type :" env !evdr typ
        with e -> error (Pp.str  (Printexc.to_string e)));
        debug_string [`Module] (Printf.sprintf "constant field: '%s'." (Names.Label.to_string lab));
-       declare_abstraction ~opaque ~continuation ~kind arity evdr env c lab_R
+       ignore(declare_abstraction ~opaque ~continuation ~kind arity evdr env c lab_R)
 
      | (lab, SFBmind _) ->
-       let evdr, env = Pfedit.get_current_context () in
-       let evdr = ref evdr in
+       let env = Global.env () in
+       let evd = Evd.from_env env in
+       let evdr = ref evd in
        let mut_ind = Mod_subst.mind_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        let ind = (mut_ind, 0) in
        if try ignore (Relations.get_inductive arity ind); true with Not_found -> false then
@@ -289,7 +299,8 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
           match mb'.mod_type with NoFunctor _ ->
             (match mb'.mod_expr with FullStruct | Algebraic _ -> true | _ -> false)
           | _ -> false
-        -> declare_module ~continuation arity mb'
+        ->
+        declare_module ~continuation arity mb'
 
      | (lab, _) ->
          Pp.(Flags.if_verbose msg_info (str (Printf.sprintf "Ignoring field '%s'." (Names.Label.to_string lab))));
@@ -322,8 +333,9 @@ let translateFullName ~fullname arity (kername : Names.KerName.t) : string =
     (String.concat "_o_" (plstr@[nstr]))
   else nstr
 
-
 let command_constant ?(continuation = default_continuation) ~fullname arity constant names =
+  let env = Global.env () in
+  let evd = Evd.from_env env in
   let poly, opaque =
     let cb = Global.lookup_constant constant in
     let open Declarations in
@@ -338,7 +350,6 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
       | Some name -> name
   in
   let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
-  let (evd, env) = Pfedit.get_current_context () in
   let evd, pconst =
     Evd.(with_context_set univ_rigid evd (UnivGen.fresh_constant_instance env constant))
   in
@@ -346,7 +357,8 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
   declare_abstraction ~continuation ~opaque ~kind arity (ref evd) env constr name
 
 let command_inductive ?(continuation = default_continuation) ~fullname arity inductive names =
-  let (evd, env) = Pfedit.get_current_context () in
+  let env = Global.env () in
+  let evd = Evd.from_env env in
   let evd, pind =
     Evd.(with_context_set univ_rigid evd (UnivGen.fresh_inductive_instance env inductive))
   in
@@ -362,7 +374,6 @@ let command_inductive ?(continuation = default_continuation) ~fullname arity ind
   in
   declare_inductive name ~continuation arity (ref evd) env pind
 
-
 let command_constructor ?(continuation = default_continuation) arity gref names =
   let open Pp in
   error ((str "'")
@@ -372,15 +383,18 @@ let command_constructor ?(continuation = default_continuation) arity gref names 
 let command_reference ?(continuation = default_continuation) ?(fullname = false) arity gref names =
    check_nothing_ongoing ();
    let open Globnames in
-   match gref with
+   (* We ignore proofs for now *)
+   let _pstate = match gref with
    | VarRef variable ->
      command_variable ~continuation arity variable names
    | ConstRef constant ->
      command_constant ~continuation ~fullname arity constant names
    | IndRef inductive ->
-     command_inductive ~continuation ~fullname arity inductive names
+     command_inductive ~continuation ~fullname arity inductive names;
+     None
    | ConstructRef constructor ->
      command_constructor ~continuation arity gref names
+   in ()
 
 let command_reference_recursive ?(continuation = default_continuation) ?(fullname = false) arity gref =
   let open Globnames in
@@ -412,11 +426,14 @@ let command_reference_recursive ?(continuation = default_continuation) ?(fullnam
   (* DEBUG: *)
   (* Pp.(msg_info (str "DepRefs:"));
    * List.iter (fun x -> msg_info (Printer.pr_global x)) dep_refs; *)
-  list_continuation continuation (fun continuation gref -> command_reference ~continuation ~fullname arity gref None) dep_refs ()
+  list_continuation continuation (fun continuation gref ->
+      command_reference ~continuation ~fullname arity gref None) dep_refs ()
 
 let translate_command arity c name =
   if !ongoing_translation then error (Pp.str "On going translation.");
-  let (evd, env) = Pfedit.get_current_context () in
+  (* Same comment as above *)
+  let env = Global.env () in
+  let evd = Evd.from_env env in
   let (evd, c) = Constrintern.interp_open_constr env evd c in
   let cte_option =
     match kind evd c with Const cte -> Some cte | _ -> None
@@ -431,4 +448,4 @@ let translate_command arity c name =
     | None -> false, false
   in
   let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
-  declare_abstraction ~opaque ~kind arity (ref evd) env c name
+  ignore(declare_abstraction ~opaque ~kind arity (ref evd) env c name)
