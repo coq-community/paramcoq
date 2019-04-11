@@ -393,7 +393,7 @@ and translate order evd env (t : constr) : constr =
     | Construct cstru -> translate_constructor order env evd cstru
 
     | Case (ci , p, c, bl) ->
-        let nargs, nparams = Inductiveops.inductive_nrealargs ci.ci_ind, Inductiveops.inductive_nparams ci.ci_ind in
+        let nargs, nparams = Inductiveops.inductive_nrealargs env ci.ci_ind, Inductiveops.inductive_nparams env ci.ci_ind in
         let theta = mkCase (ci, lift (nargs + 1) p, mkRel 1, Array.map (lift (nargs + 1)) bl) in
         debug_case_info [`Case] ci;
         debug [`Case] "theta (in translated env) = " Environ.empty_env !evd theta;
@@ -741,7 +741,7 @@ and translate_fix order evd env t =
        List.iteri (fun i x ->
           debug [`Fix] (Printf.sprintf "args.(%d) = " i) env !evd x) args;
        let (ind, u), ind_args = Inductiveops.find_inductive env !evd typ in
-       let nparams = Inductiveops.inductive_nparams ind in
+       let nparams = Inductiveops.inductive_nparams env ind in
        let _, realargs = List.chop nparams ind_args in
        let erealargs = List.map of_constr realargs in
        List.iteri (fun i x ->
@@ -761,8 +761,8 @@ and translate_fix order evd env t =
           Inductiveops.find_inductive env !evd c_typ
         in
         let i_nargs, i_nparams =
-          Inductiveops.inductive_nrealargs ind,
-          Inductiveops.inductive_nparams ind
+          Inductiveops.inductive_nrealargs env ind,
+          Inductiveops.inductive_nparams env ind
         in
         let i_params, i_realargs = List.chop i_nparams params_args in
         debug_string [`Fix] "make inductive family ...";
@@ -801,7 +801,7 @@ and translate_fix order evd env t =
             Array.mapi (fun i b ->
                let (cstr, u) as cstru = constructors.(i).Inductiveops.cs_cstr in
                let pcstr = mkConstructU (cstr, EInstance.make u) in
-               let nrealdecls = Inductiveops.constructor_nrealdecls cstr in
+               let nrealdecls = Inductiveops.constructor_nrealdecls env cstr in
                let realdecls, b = decompose_lam_n_assum !evd nrealdecls b in
                let ei_params = List.map of_constr i_params in
                let lifted_i_params = List.map (lift nrealdecls) ei_params in
