@@ -15,7 +15,7 @@ pkgs.stdenv.mkDerivation {
 
   name = "paramcoq";
 
-  buildInputs = with coq.ocamlPackages; [ ocaml findlib ]
+  buildInputs = with coq.ocamlPackages; [ pkgs.which ocaml findlib ]
     ++ pkgs.lib.optionals shell [ merlin ocp-indent ocp-index ];
 
   propagatedBuildInputs = [
@@ -23,6 +23,14 @@ pkgs.stdenv.mkDerivation {
   ];
 
   src = if shell then null else ./.;
+
+  doCheck = true;
+
+  preCheck = "pushd test-suite";
+
+  checkTarget = "examples";
+
+  postCheck = "popd";
 
   installFlags = "COQLIB=$(out)/lib/coq/${coq.coq-version}/";
 }
