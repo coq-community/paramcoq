@@ -1,0 +1,7 @@
+---
+shortname: paramcoq
+
+plugin: true
+
+tested_coq_nix_versions:
+- version_or_url: https://github.com/coq/coq-on-cachix/tarball/v8.10
