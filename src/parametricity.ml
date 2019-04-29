@@ -41,9 +41,7 @@ module CoqConstants = struct
         let _, a, _ = destProd !evdref ref_type in
         a
       in
-      match Evarconv.cumul env !evdref univ ref_sort with
-      | Some evd -> evdref := evd
-      | None -> ()
+      evdref := Evarconv.unify_leq_delay env !evdref univ ref_sort
     in
     let extract_pred_sort poly_ref =
       let evd, poly_ref = Evarutil.new_global !evdref poly_ref in
@@ -55,9 +53,7 @@ module CoqConstants = struct
         let _, a, _ = destProd !evdref typ in
         snd (decompose_prod !evdref a)
       in
-      match Evarconv.cumul env !evdref univ ref_sort with
-      | Some evd -> evdref := evd
-      | None -> ()
+      evdref := Evarconv.unify_leq_delay env !evdref univ ref_sort
     in
     List.iter
       extract_type_sort
