@@ -150,10 +150,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
       let realtyp = Retyping.get_type_of env sigma term in
       debug [`Realizer] (Printf.sprintf "real in realdef (%d) =" !cpt) env sigma term;
       debug [`Realizer] (Printf.sprintf "realtyp in realdef (%d) =" !cpt) env sigma realtyp;
-      let sigma = 
-        match Evarconv.cumul env sigma realtyp typ_R with
-        | Some sigma -> sigma
-        | None -> sigma in
+      let sigma = Evarconv.unify_leq_delay env sigma realtyp typ_R in
       debug [`Realizer] (Printf.sprintf "real in realdef (%d), after =" !cpt) env sigma term;
       debug [`Realizer] (Printf.sprintf "realtyp in realdef (%d), after =" !cpt) env sigma realtyp;
       (sigma, term)
