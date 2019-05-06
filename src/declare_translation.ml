@@ -34,10 +34,8 @@ let parametricity_close_proof ~pstate =
   let opaque = if !ongoing_translation_opacity then Proof_global.Opaque else Proof_global.Transparent in
   let proof_obj, terminator =
     Proof_global.close_proof ~opaque ~keep_body_ucst_separate:false (fun x -> x) pstate in
-  let pstate = Proof_global.discard_current pstate in
   ongoing_translation := false;
-  Proof_global.apply_terminator terminator (Proof_global.Proved (opaque,None,proof_obj));
-  pstate
+  Proof_global.apply_terminator terminator (Proof_global.Proved (opaque,None,proof_obj))
 
 let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
@@ -49,8 +47,8 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
     tclTHEN (Refine.refine ~typecheck begin fun sigma -> term sigma end) tactic
   in
   ongoing_translation_opacity := opaque;
-  let pstate = Lemmas.start_proof ~ontop:None name kind evd typ ~hook in
-  let pstate = Proof_global.simple_with_current_proof (fun _ p ->
+  let pstate = Lemmas.start_proof name kind evd typ ~hook in
+  let pstate = Proof_global.modify_proof (fun p ->
       let p, _, () = Proof.run_tactic Global.(env()) init_tac p in
       p)
       pstate
@@ -58,7 +56,7 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   let proof = Proof_global.give_me_the_proof pstate in
   let is_done = Proof.is_done proof in
   if is_done then
-    parametricity_close_proof ~pstate
+    (parametricity_close_proof ~pstate; None)
   else begin
     ongoing_translation := true;
     obligation_message ();

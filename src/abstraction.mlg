@@ -44,8 +44,8 @@ VERNAC COMMAND EXTEND ShowParametricityTactic CLASSIFIED AS QUERY
 END
 
 VERNAC COMMAND EXTEND ParametricityDefined CLASSIFIED AS SIDEFF
-| ![ proof ] [ "Parametricity" "Done"  ] -> {
-  fun ~pstate -> Option.cata (fun pstate -> parametricity_close_proof ~pstate) None pstate
+| ![ close_proof ] [ "Parametricity" "Done"  ] -> {
+  parametricity_close_proof
 }
 END
 
