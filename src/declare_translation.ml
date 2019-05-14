@@ -50,9 +50,11 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
   in
   ongoing_translation_opacity := opaque;
   let pstate = Lemmas.start_proof ~ontop:None name kind evd typ ~hook in
-  let pstate, _ = Proof_global.with_current_proof (fun _ p ->
-      Proof.run_tactic Global.(env()) init_tac p
-    ) pstate in
+  let pstate = Proof_global.simple_with_current_proof (fun _ p ->
+      let p, _, () = Proof.run_tactic Global.(env()) init_tac p in
+      p)
+      pstate
+  in
   let proof = Proof_global.give_me_the_proof pstate in
   let is_done = Proof.is_done proof in
   if is_done then
