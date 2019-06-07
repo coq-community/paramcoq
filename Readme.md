@@ -1,7 +1,7 @@
 Paramcoq
 ========
 
-[![Build Status](https://travis-ci.com/coq-community/paramcoq.svg?branch=master)](https://travis-ci.com/coq-community/paramcoq/branches)
+[![Build Status](https://travis-ci.com/coq-community/paramcoq.svg?branch=v8.9)](https://travis-ci.com/coq-community/paramcoq/branches)
 
 The plugin is still in an experimental state. 
 It is not very user friendly (lack of good error messages) and still contains bugs. 
