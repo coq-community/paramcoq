@@ -36,7 +36,7 @@ let parametricity_close_proof ~lemma =
   let () = Lemmas.save_lemma_proved ?proof:None ~lemma ~opaque ~idopt:None in
   ()
 
-let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
+let add_definition ~opaque ~hook ~poly ~scope ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
   debug Debug.all "add_definition, typ  = " env evd typ;
   debug_evar_map Debug.all "add_definition, evd  = " env evd;
@@ -46,7 +46,8 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
     tclTHEN (Refine.refine ~typecheck begin fun sigma -> term sigma end) tactic
   in
   ongoing_translation_opacity := opaque;
-  let lemma = Lemmas.start_lemma name kind evd typ ~hook in
+  let info = Lemmas.Info.make ~hook ~scope ~kind () in
+  let lemma = Lemmas.start_lemma ~name ~poly ~info evd typ in
   let lemma = Lemmas.pf_map (Proof_global.map_proof (fun p ->
       let p, _, () = Proof.run_tactic Global.(env()) init_tac p in
       p))
@@ -62,7 +63,7 @@ let add_definition ~opaque ~hook ~kind ~tactic name env evd term typ =
     Some lemma
   end
 
-let declare_abstraction ?(opaque = false) ?(continuation = default_continuation) ?kind arity evdr env a name =
+let declare_abstraction ?(opaque = false) ?(continuation = default_continuation) ~poly ~scope ~kind arity evdr env a name =
   Debug.debug_evar_map Debug.all "declare_abstraction, evd  = " env !evdr;
   debug [`Abstraction] "declare_abstraction, a =" env !evdr a;
   let b = Retyping.get_type_of env !evdr a in
@@ -93,12 +94,8 @@ let declare_abstraction ?(opaque = false) ?(continuation = default_continuation)
            continuation ()))
       | _ -> (DeclareDef.Hook.make (fun _ _ _ dcl -> continuation ()))
   in
-  let kind = match kind with
-    | None -> Decl_kinds.Global Decl_kinds.ImportDefaultBehavior, true, Decl_kinds.DefinitionBody Decl_kinds.Definition
-    | Some kind -> kind in
   let tactic = snd (Relations.get_parametricity_tactic ()) in
-  add_definition ~tactic ~opaque ~kind ~hook name env evd a_R b_R
-
+  add_definition ~tactic ~opaque ~poly ~scope ~kind ~hook name env evd a_R b_R
 
 let declare_inductive name ?(continuation = default_continuation) arity evd env (((mut_ind, _) as ind, inst)) =
   let mut_body, _ = Inductive.lookup_mind_specif env ind in
@@ -157,7 +154,9 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
       (let sigma, real = new_evar_compat env sigma typ_R in
       (sigma, real))
   in
-  let kind = Decl_kinds.Global Decl_kinds.ImportDefaultBehavior, true, Decl_kinds.DefinitionBody Decl_kinds.Definition in
+  let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+  let poly = true in
+  let kind = Decl_kinds.DefinitionBody Decl_kinds.Definition in
   let name = match name with Some x -> x | _ ->
      let name_str = (match EConstr.kind !evd var with
      | Var id -> Names.Id.to_string id
@@ -174,7 +173,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
     Relations.declare_relation arity gref dcl;
     continuation ()) in
   let tactic = snd (Relations.get_parametricity_tactic ()) in
-  add_definition ~tactic  ~opaque:false ~kind ~hook name env sigma real typ_R
+  add_definition ~tactic ~opaque:false ~poly ~scope ~kind ~hook name env sigma real typ_R
 
 let realizer_command arity name var real =
   let env = Global.env () in
@@ -247,7 +246,8 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
          match cb.const_body with OpaqueDef _ -> true | _ -> false
        in
        let poly = Declareops.constant_is_polymorphic cb in
-       let kind = Decl_kinds.(Global ImportDefaultBehavior, poly, DefinitionBody Definition) in
+       let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+       let kind = Decl_kinds.(DefinitionBody Definition) in
        let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
@@ -267,7 +267,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
         debug [`Module] "type :" env !evdr typ
        with e -> error (Pp.str  (Printexc.to_string e)));
        debug_string [`Module] (Printf.sprintf "constant field: '%s'." (Names.Label.to_string lab));
-       ignore(declare_abstraction ~opaque ~continuation ~kind arity evdr env c lab_R)
+       ignore(declare_abstraction ~opaque ~continuation ~poly ~scope ~kind arity evdr env c lab_R)
 
      | (lab, SFBmind _) ->
        let env = Global.env () in
@@ -345,12 +345,13 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
                 @@ constant
       | Some name -> name
   in
-  let kind = Decl_kinds.(Global ImportDefaultBehavior, poly, DefinitionBody Definition) in
+  let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+  let kind = Decl_kinds.(DefinitionBody Definition) in
   let evd, pconst =
     Evd.(with_context_set univ_rigid evd (UnivGen.fresh_constant_instance env constant))
   in
   let constr = mkConstU (fst pconst, EInstance.make @@ snd pconst) in
-  declare_abstraction ~continuation ~opaque ~kind arity (ref evd) env constr name
+  declare_abstraction ~continuation ~opaque ~poly ~scope ~kind arity (ref evd) env constr name
 
 let command_inductive ?(continuation = default_continuation) ~fullname arity inductive names =
   let env = Global.env () in
@@ -443,5 +444,7 @@ let translate_command arity c name =
                                         | _ -> true)
     | None -> false, false
   in
-  let kind = Decl_kinds.(Global ImportDefaultBehavior, poly, DefinitionBody Definition) in
-  ignore(declare_abstraction ~opaque ~kind arity (ref evd) env c name)
+  let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
+  let kind = Decl_kinds.(DefinitionBody Definition) in
+  let _ : Lemmas.t option = declare_abstraction ~opaque ~poly ~scope ~kind arity (ref evd) env c name in
+  ()
