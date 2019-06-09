@@ -95,7 +95,7 @@ let declare_abstraction ?(opaque = false) ?(continuation = default_continuation)
       | _ -> (Lemmas.mk_hook (fun _ _ _ dcl -> continuation ()))
   in
   let kind = match kind with
-    | None -> Decl_kinds.Global, true, Decl_kinds.DefinitionBody Decl_kinds.Definition
+    | None -> Decl_kinds.Global Decl_kinds.ImportDefaultBehavior, true, Decl_kinds.DefinitionBody Decl_kinds.Definition
     | Some kind -> kind in
   let tactic = snd (Relations.get_parametricity_tactic ()) in
   add_definition ~tactic ~opaque ~kind ~hook name env evd a_R b_R
@@ -158,7 +158,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
       (let sigma, real = new_evar_compat env sigma typ_R in
       (sigma, real))
   in
-  let kind = Decl_kinds.Global, true, Decl_kinds.DefinitionBody Decl_kinds.Definition in
+  let kind = Decl_kinds.Global Decl_kinds.ImportDefaultBehavior, true, Decl_kinds.DefinitionBody Decl_kinds.Definition in
   let name = match name with Some x -> x | _ ->
      let name_str = (match EConstr.kind !evd var with
      | Var id -> Names.Id.to_string id
@@ -248,7 +248,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
          match cb.const_body with OpaqueDef _ -> true | _ -> false
        in
        let poly = Declareops.constant_is_polymorphic cb in
-       let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
+       let kind = Decl_kinds.(Global ImportDefaultBehavior, poly, DefinitionBody Definition) in
        let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
@@ -346,7 +346,7 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
                 @@ constant
       | Some name -> name
   in
-  let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
+  let kind = Decl_kinds.(Global ImportDefaultBehavior, poly, DefinitionBody Definition) in
   let evd, pconst =
     Evd.(with_context_set univ_rigid evd (UnivGen.fresh_constant_instance env constant))
   in
@@ -444,5 +444,5 @@ let translate_command arity c name =
                                         | _ -> true)
     | None -> false, false
   in
-  let kind = Decl_kinds.(Global, poly, DefinitionBody Definition) in
+  let kind = Decl_kinds.(Global ImportDefaultBehavior, poly, DefinitionBody Definition) in
   ignore(declare_abstraction ~opaque ~kind arity (ref evd) env c name)
