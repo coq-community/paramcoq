@@ -33,7 +33,7 @@ let default_continuation = ignore
 let parametricity_close_proof ~lemma =
   let opaque = if !ongoing_translation_opacity then Proof_global.Opaque else Proof_global.Transparent in
   ongoing_translation := false;
-  let () = Lemmas.save_lemma_proved ?proof:None ~lemma ~opaque ~idopt:None in
+  let () = Lemmas.save_lemma_proved ~lemma ~opaque ~idopt:None in
   ()
 
 let add_definition ~opaque ~hook ~poly ~scope ~kind ~tactic name env evd term typ =
