@@ -156,7 +156,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
   in
   let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
   let poly = true in
-  let kind = Decl_kinds.DefinitionBody Decl_kinds.Definition in
+  let kind = Decls.(IsDefinition Definition) in
   let name = match name with Some x -> x | _ ->
      let name_str = (match EConstr.kind !evd var with
      | Var id -> Names.Id.to_string id
@@ -247,7 +247,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
        in
        let poly = Declareops.constant_is_polymorphic cb in
        let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
-       let kind = Decl_kinds.(DefinitionBody Definition) in
+       let kind = Decls.(IsDefinition Definition) in
        let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
@@ -346,7 +346,7 @@ let command_constant ?(continuation = default_continuation) ~fullname arity cons
       | Some name -> name
   in
   let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
-  let kind = Decl_kinds.(DefinitionBody Definition) in
+  let kind = Decls.(IsDefinition Definition) in
   let evd, pconst =
     Evd.(with_context_set univ_rigid evd (UnivGen.fresh_constant_instance env constant))
   in
@@ -445,6 +445,6 @@ let translate_command arity c name =
     | None -> false, false
   in
   let scope = DeclareDef.Global Declare.ImportDefaultBehavior in
-  let kind = Decl_kinds.(DefinitionBody Definition) in
+  let kind = Decls.(IsDefinition Definition) in
   let _ : Lemmas.t option = declare_abstraction ~opaque ~poly ~scope ~kind arity (ref evd) env c name in
   ()
