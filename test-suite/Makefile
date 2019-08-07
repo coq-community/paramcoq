@@ -3,8 +3,8 @@
 
 include ../Makefile.coq.conf
 COQBIN?=$(dir $(shell which coqtop))
-COQC := $(COQBIN)coqc 
-PARAMLIBS := $(addprefix -I ../,$(COQMF_SRC_SUBDIRS))
+COQC := $(COQBIN)coqc
+PARAMLIBS := $(addprefix -I ../,$(COQMF_SRC_SUBDIRS)) -set "Template Check=false"
 EXAMPLES := example.v ListQueue.v features.v wadler.v bug.v bug2.v bug3.v bug4.v bug5.v dummyFix.v exmNotParametric.v
 
 all:: Parametricity.vo
