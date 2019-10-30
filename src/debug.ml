@@ -196,8 +196,9 @@ let debug_mutual_inductive_entry =
       | Monomorphic_entry ux ->
          Univ.pr_universe_context_set UnivNames.pr_with_global_universes ux
       | Polymorphic_entry (_,ux) ->
-         Univ.pr_universe_context ?variance:entry.mind_entry_variance UnivNames.pr_with_global_universes ux
+         Univ.pr_universe_context UnivNames.pr_with_global_universes ux
     in
+    let mind_entry_cumul_pp = bool entry.mind_entry_cumulative in
     let mind_entry_private_pp =
       match entry.mind_entry_private with
        None -> str "None" | Some true -> str "Some true" | Some false -> str "Some false"
@@ -209,6 +210,7 @@ let debug_mutual_inductive_entry =
          "mind_entry_inds", mind_entry_inds_pp;
          "mind_entry_polymorphic", mind_entry_polymorphic_pp;
          "mind_entry_universes", mind_entry_universes_pp;
+         "mind_entry_cumulative", mind_entry_cumul_pp;
          "mind_entry_private", mind_entry_private_pp]
     in
     let res = (str "{") ++ h 140 (
