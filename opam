@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "coq-paramcoq"
-version: "1.1.1+coq8.10"
+version: "1.1.2+coq8.11"
 maintainer: "Pierre Roux <pierre.roux@onera.fr>"
 
 homepage: "https://github.com/coq-community/paramcoq"
@@ -12,7 +12,7 @@ build: [make "-j%{jobs}%"]
 install: [make "install"]
 remove: ["rm" "-R" "%{lib}%/coq/user-contrib/Param"]
 depends: [
-  "coq" {>= "8.10" & < "8.10~"}
+  "coq" {>= "8.11" & < "8.11~"}
 ]
 
 tags: [
