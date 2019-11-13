@@ -533,8 +533,12 @@ and translate_constructor order env evdr ((ind, i), u) =
   mkConstructU ((ind, i), u)
 
 and translate_case_info order env ci =
+  let ci_ind =
+    try Globnames.destIndRef (Relations.get_inductive order ci.ci_ind)
+    with Not_found -> error (Pp.str (Printf.sprintf "The inductive '%s' has no registered translation."
+    (KerName.to_string (MutInd.user (fst ci.ci_ind))))) in
   {
-    ci_ind = Globnames.destIndRef (Relations.get_inductive order ci.ci_ind);
+    ci_ind = ci_ind;
     ci_npar = (order + 1) * ci.ci_npar;
     ci_cstr_ndecls = Array.map (fun x -> (order + 1) * x) ci.ci_cstr_ndecls;
     ci_cstr_nargs = Array.map (fun x -> (order + 1) * x) ci.ci_cstr_nargs;
