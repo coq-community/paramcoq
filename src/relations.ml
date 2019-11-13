@@ -58,25 +58,25 @@ let declare_relation n x x_R =
  Lib.add_anonymous_leaf (in_relation (n, x, x_R))
  
 let declare_constant_relation (n : int) (c : Constant.t) (c_R : Constant.t) =
-  declare_relation n (ConstRef c) (ConstRef c_R)
+  declare_relation n (GlobRef.ConstRef c) (GlobRef.ConstRef c_R)
 
 let declare_inductive_relation (n : int) (i : inductive) (i_R : inductive) = 
-  declare_relation n (IndRef i) (IndRef i_R)
+  declare_relation n (GlobRef.IndRef i) (GlobRef.IndRef i_R)
 
 let declare_variable_relation (n : int) (v : variable) (v_R : Constant.t) =
-  declare_relation n (VarRef v) (ConstRef v_R)
+  declare_relation n (GlobRef.VarRef v) (GlobRef.ConstRef v_R)
 
 let get_constant n c = 
   let map = IntMap.find n !relations in
-  GMap.find (ConstRef c) map
+  GMap.find (GlobRef.ConstRef c) map
 
 let get_inductive n i = 
   let map = IntMap.find n !relations in
-  GMap.find (IndRef i) map
+  GMap.find (GlobRef.IndRef i) map
 
 let get_variable n v = 
   let map = IntMap.find n !relations in
-  destConstRef (GMap.find (VarRef v) map)
+  destConstRef (GMap.find (GlobRef.VarRef v) map)
   
 let is_referenced n ref = 
   try
