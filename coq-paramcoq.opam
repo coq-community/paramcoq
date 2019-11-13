@@ -1,10 +1,10 @@
-opam-version: "1.2"
+opam-version: "2.0"
 name: "coq-paramcoq"
 version: "1.1.2+coq8.9"
 maintainer: "Pierre Roux <pierre.roux@onera.fr>"
 
 homepage: "https://github.com/coq-community/paramcoq"
-dev-repo: "https://github.com/coq-community/paramcoq.git"
+dev-repo: "git+https://github.com/coq-community/paramcoq.git"
 bug-reports: "https://github.com/coq-community/paramcoq/issues"
 license: "MIT"
 
@@ -32,3 +32,12 @@ authors: [
   "Cyril Cohen"
   "Matthieu Sozeau"
 ]
+synopsis: "Paramcoq"
+description: """
+The plugin is still in an experimental state. It is not very user
+friendly (lack of good error messages) and still contains bugs. But is
+useable enough to "translate" a large chunk of standard library."""
+url {
+  src: "https://github.com/coq-community/paramcoq/archive/v1.1.2+coq8.9.tar.gz"
+  checksum: "sha256=e87128b8080b48ee96ce37bec75d40802366b7bea5b1999c236bfa18f797427f"
+}
