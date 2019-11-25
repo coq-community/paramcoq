@@ -70,7 +70,7 @@ module CoqConstants = struct
     Program.papp evdref Program.coq_eq_rect args
 
   let proof_irrelevance evdref args =
-    Program.papp evdref (fun () -> Coqlib.coq_reference msg ["Logic"; "ProofIrrelevance"] "proof_irrelevance") args
+    Program.papp evdref (fun () -> Coqlib.lib_ref "core.proof_irrelevance") args
 end
 
 let default_arity = 2
