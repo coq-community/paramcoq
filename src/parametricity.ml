@@ -61,16 +61,21 @@ module CoqConstants = struct
     extract_pred_sort (Program.coq_eq_rect ())
 
   let eq evdref args =
-    Program.papp evdref Program.coq_eq_ind args
+    let evd, t = Program.papp !evdref Program.coq_eq_ind args in
+    evdref := evd; t
 
   let eq_refl evdref args =
-    Program.papp evdref Program.coq_eq_refl args
+    let evd, t = Program.papp !evdref Program.coq_eq_refl args in
+    evdref := evd; t
 
   let transport evdref args =
-    Program.papp evdref Program.coq_eq_rect args
+    let evd, t = Program.papp !evdref Program.coq_eq_rect args in
+    evdref := evd; t
 
   let proof_irrelevance evdref args =
-    Program.papp evdref (fun () -> Coqlib.lib_ref "core.proof_irrelevance") args
+    let evd, t = Program.papp !evdref (fun () -> Coqlib.lib_ref "core.proof_irrelevance") args in
+    evdref := evd; t
+
 end
 
 let default_arity = 2
