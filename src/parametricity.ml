@@ -1059,7 +1059,7 @@ let rec translate_mind_body name order evdr env kn b inst =
         let typename = ind.mind_typename in
         debug_string [`Inductive] (Printf.sprintf "Adding '%s' to the environement." (Names.Id.to_string typename));
         let full_arity, cst =
-           Inductive.constrained_type_of_inductive env ((b, ind), inst)
+           Inductive.constrained_type_of_inductive ((b, ind), inst)
         in
         let env = push_rel (toDecl (mkannot (Names.Name typename), None, (of_constr full_arity))) env in
         let env = Environ.add_constraints cst env in
@@ -1114,7 +1114,7 @@ and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params,
   Debug.debug_string [`Inductive] (Printf.sprintf "mind_nparams_rec = %d" p);
   Debug.debug_string [`Inductive] (Printf.sprintf "mind_nparams_ctxt = %d" (List.length mut_entry.mind_params_ctxt));
   let _, arity =
-     decompose_prod_n_assum !evdr p (of_constr @@ Inductive.type_of_inductive env ((mut_entry, e), inst))
+     decompose_prod_n_assum !evdr p (of_constr @@ Inductive.type_of_inductive ((mut_entry, e), inst))
   in
   debug [`Inductive] "Arity:" env_params !evdr arity;
   let arity_R =
