@@ -241,7 +241,6 @@ let debug_mutual_inductive_entry =
     let mind_entry_arity_pp =
       Printer.safe_pr_constr_env env_params Evd.empty entry.mind_entry_arity
     in
-    let mind_entry_template_pp = str (if entry.mind_entry_template then "true" else "false") in
     let mind_entry_consnames_pp =
       str (String.concat ";" (List.map Id.to_string entry.mind_entry_consnames))
     in
@@ -252,7 +251,6 @@ let debug_mutual_inductive_entry =
     let fields =
        [ "mind_entry_typename", mind_entry_typename_pp;
          "mind_entry_arity", mind_entry_arity_pp;
-         "mind_entry_template", mind_entry_template_pp;
          "mind_entry_consnames", mind_entry_consnames_pp;
          "mind_entry_lc", mind_entry_lc_pp ]
     in
