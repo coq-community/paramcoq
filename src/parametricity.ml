@@ -1095,6 +1095,7 @@ let rec translate_mind_body name order evdr env kn b inst =
     mind_entry_params = mind_entry_params_R;
     mind_entry_inds = mind_entry_inds_R;
     mind_entry_universes = univs;
+    mind_entry_template = Option.has_some b.mind_template;
     mind_entry_cumulative = false;
     mind_entry_private = b.mind_private;
   } in
@@ -1142,7 +1143,6 @@ and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params,
   {
     mind_entry_typename = name;
     mind_entry_arity = to_constr !evdr arity_R;
-    mind_entry_template = (match e.mind_arity with TemplateArity _ -> true | _ -> false);
     mind_entry_consnames = List.map trans_consname (Array.to_list e.mind_consnames);
     mind_entry_lc =
       begin
