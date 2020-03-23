@@ -179,7 +179,7 @@ let realizer_command arity name var real =
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let (sigma, var) = Constrintern.interp_open_constr env sigma var in
-  Obligations.check_evars env sigma;
+  RetrieveObl.check_evars env sigma;
   let real = fun sigma -> Constrintern.interp_open_constr env sigma real in
   ignore(declare_realizer arity (ref sigma) env name var ~real)
 
