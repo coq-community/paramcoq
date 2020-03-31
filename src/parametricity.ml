@@ -973,7 +973,7 @@ and weaken_unused_free_rels env_rc sigma term =
    debug_rel_context [`Fix] "env_rv = " Environ.empty_env (List.map toDecl env_rc);
    let set = collect_free_vars 1 (Termops.free_rels sigma term) env_rc in
    let lst = Int.Set.fold (fun x acc -> x::acc) set [] in
-   let lst = List.sort Pervasives.compare lst in
+   let lst = List.sort compare lst in
    debug_string [`Fix] (Printf.sprintf "[%s]" (String.concat ";" (List.map string_of_int lst)));
    let rec dup n x acc = if n <= 0 then acc else dup (n-1) x (x::acc) in
    let rec gen_sub min pos len acc = function
