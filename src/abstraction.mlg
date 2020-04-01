@@ -43,7 +43,7 @@ VERNAC COMMAND EXTEND ShowParametricityTactic CLASSIFIED AS QUERY
    Pp.(msg_info (str "Paramericity obligation tactic is " ++ Relations.print_parametricity_tactic ())) }
 END
 
-VERNAC COMMAND EXTEND ParametricityDefined CLASSIFIED AS SIDEFF
+VERNAC COMMAND EXTEND ParametricityDefined CLASSIFIED AS SIDEFF STATE program
 | ![ close_proof ] [ "Parametricity" "Done"  ] -> {
   parametricity_close_proof
 }
