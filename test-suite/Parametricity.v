@@ -54,12 +54,14 @@ Set Allow StrictProp.  (* TODO: use SProp instead of ProofIrrelevance *)
 
 Parametricity Module Logic.
 Parametricity Module Datatypes.
+Parametricity Module Specif.
 
 Parametricity Module Logic_Type.
 Parametricity Module Decimal.
+Parametricity Module Hexadecimal.
+Parametricity Module Numeral.
 Parametricity Module Nat.
 
-Parametricity Module Specif.
 Parametricity Module Peano.
 
 Parametricity Module Wf.
