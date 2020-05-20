@@ -1,5 +1,5 @@
 opam-version: "2.0"
-version: "dev"
+version: "1.1.2+coq8.12"
 maintainer: "Pierre Roux <pierre.roux@onera.fr>"
 
 homepage: "https://github.com/coq-community/paramcoq"
@@ -10,7 +10,7 @@ license: "MIT"
 build: [make "-j%{jobs}%"]
 install: [make "install"]
 depends: [
-  "coq" {>= "8.10" & < "8.10~"}
+  "coq" {>= "8.12" & < "8.13~"}
 ]
 
 tags: [
