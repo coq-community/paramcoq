@@ -30,11 +30,11 @@ let obligation_message () =
 
 let default_continuation = ignore
 
-let parametricity_close_proof ~lemma =
+let parametricity_close_proof ~lemma ~pm =
   let opaque = if !ongoing_translation_opacity then Vernacexpr.Opaque else Transparent in
   ongoing_translation := false;
-  let _ : Names.GlobRef.t list = Declare.Proof.save ~proof:lemma ~opaque ~idopt:None in
-  ()
+  let pm, _ = Declare.Proof.save ~pm ~proof:lemma ~opaque ~idopt:None in
+  pm
 
 let add_definition ~opaque ~hook ~poly ~scope ~kind ~tactic name env evd term typ =
   debug Debug.all "add_definition, term = " env evd (snd (term ( evd)));
@@ -56,7 +56,8 @@ let add_definition ~opaque ~hook ~poly ~scope ~kind ~tactic name env evd term ty
   let proof = Declare.Proof.get lemma in
   let is_done = Proof.is_done proof in
   if is_done then
-    (parametricity_close_proof ~lemma; None)
+    (let pm = Declare.OblState.empty in
+     let _pm = parametricity_close_proof ~pm ~lemma in None)
   else begin
     ongoing_translation := true;
     obligation_message ();
