@@ -197,7 +197,7 @@ let debug_mutual_inductive_entry =
       | Polymorphic_entry (_,ux) ->
          Univ.pr_universe_context UnivNames.pr_with_global_universes ux
     in
-    let mind_entry_cumul_pp = bool entry.mind_entry_cumulative in
+    let mind_entry_cumul_pp = bool (Option.has_some entry.mind_entry_variance) in
     let mind_entry_private_pp =
       match entry.mind_entry_private with
        None -> str "None" | Some true -> str "Some true" | Some false -> str "Some false"
