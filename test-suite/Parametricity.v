@@ -59,7 +59,7 @@ Parametricity Module Specif.
 Parametricity Module Logic_Type.
 Parametricity Module Decimal.
 Parametricity Module Hexadecimal.
-Parametricity Module Numeral.
+Parametricity Module Number.
 Parametricity Module Nat.
 
 Parametricity Module Peano.
