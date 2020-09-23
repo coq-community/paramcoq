@@ -19,7 +19,7 @@ let (set_parametricity_tactic, get_parametricity_tactic, print_parametricity_tac
     Tactic_option.declare_tactic_option "Parametricity tactic"
 
 module IntMap = Map.Make(Int)
-module GMap = Map.Make(GlobRef.Ordered)
+module GMap = GlobRef.Map
 
 
 let initial_translations = GMap.empty
