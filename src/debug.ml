@@ -212,7 +212,7 @@ let debug_mutual_inductive_entry =
          "mind_entry_cumulative", mind_entry_cumul_pp;
          "mind_entry_private", mind_entry_private_pp]
     in
-    let res = (str "{") ++ h 140 (
+    let res = (str "{") ++ hov 140 (
     List.fold_left (fun acc (name, pp) ->
         field name pp acc) (mt ()) fields) ++ str "}" in
     Feedback.msg_notice res;
@@ -223,7 +223,7 @@ let debug_mutual_inductive_entry =
       SortSet.fold (fun sort accu ->
        accu ++ (Printer.pr_sort evd sort) ++ fnl ()) sorts (mt ())
     in
-    Feedback.msg_notice (h 100 sorts_pp)
+    Feedback.msg_notice (hov 100 sorts_pp)
   and pp_one_inductive_entry arities env_params entry =
     let params = Environ.rel_context env_params in
     let arities = List.map (fun (x, y) -> (x, Term.it_mkProd_or_LetIn y params)) arities in
@@ -254,7 +254,7 @@ let debug_mutual_inductive_entry =
          "mind_entry_consnames", mind_entry_consnames_pp;
          "mind_entry_lc", mind_entry_lc_pp ]
     in
-    str "{" ++ h 100 (
+    str "{" ++ hov 100 (
     List.fold_left (fun acc (name, pp) ->
         field name pp acc) (mt ()) fields) ++ str "}"
   in
