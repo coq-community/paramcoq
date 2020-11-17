@@ -1096,7 +1096,7 @@ let rec translate_mind_body name order evdr env kn b inst =
     mind_entry_inds = mind_entry_inds_R;
     mind_entry_universes = univs;
     mind_entry_template = Option.has_some b.mind_template;
-    mind_entry_cumulative = false;
+    mind_entry_variance = None;
     mind_entry_private = b.mind_private;
   } in
   Debug.debug_mutual_inductive_entry !evdr res;
