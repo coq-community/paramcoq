@@ -33,7 +33,7 @@ supported_coq_versions:
   text: >
     The master branch tracks the development version of Coq, see
     releases for compatibility with released versions of Coq.
-  opam: '{= dev }'
+  opam: '{= "dev" }'
 plugin: true
 categories:
   - name: 'Miscellaneous/Coq Extensions'
