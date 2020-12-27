@@ -19,6 +19,8 @@
 
 # Coq auxiliary files
 .*.aux
+*.vos
+*.vok
 
 # Coq compilation unit
 *.vo
