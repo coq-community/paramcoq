@@ -1,6 +1,6 @@
 opam-version: "2.0"
 maintainer: "Pierre Roux <pierre.roux@onera.fr>"
-version: "dev"
+version: "1.1.2+coq8.13"
 
 homepage: "https://github.com/coq-community/paramcoq"
 dev-repo: "git+https://github.com/coq-community/paramcoq.git"
@@ -15,7 +15,7 @@ The plugin is still in an experimental state. It is not very user friendly (lack
 build: [make "-j%{jobs}%" ]
 install: [make "install"]
 depends: [
-  "coq" {= "dev" }
+  "coq" {>= "8.13" & < "8.14~"}
 ]
 
 tags: [

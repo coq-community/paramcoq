@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - v8.13
   pull_request:
     branches:
       - '**'
@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         image:
-          - 'coqorg/coq:dev'
+          - 'coqorg/coq:8.13'
       fail-fast: false
     steps:
       - uses: actions/checkout@v2

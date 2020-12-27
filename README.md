@@ -6,7 +6,7 @@
 [![Zulip][zulip-shield]][zulip-link]
 [![DOI][doi-shield]][doi-link]
 
-[action-shield]: https://github.com/coq-community/paramcoq/workflows/CI/badge.svg?branch=master
+[action-shield]: https://github.com/coq-community/paramcoq/workflows/CI/badge.svg?branch=v8.13
 [action-link]: https://github.com/coq-community/paramcoq/actions?query=workflow%3ACI
 
 [contributing-shield]: https://img.shields.io/badge/contributions-welcome-%23f7931e.svg
