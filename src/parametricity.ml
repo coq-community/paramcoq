@@ -393,9 +393,10 @@ and translate order evd env (t : constr) : constr =
 
     | Construct cstru -> translate_constructor order env evd cstru
 
-    | Case (ci , p, iv, c, bl) ->
+    | Case (ci, u, pms, p, iv, c, bl) ->
+        let (ci, p, iv, c, bl) = EConstr.expand_case env !evd (ci, u, pms, p, iv, c, bl) in
         let nargs, nparams = Inductiveops.inductive_nrealargs env ci.ci_ind, Inductiveops.inductive_nparams env ci.ci_ind in
-        let theta = mkCase (ci, lift (nargs + 1) p, Constr.map_invert (lift (nargs + 1)) iv, mkRel 1, Array.map (lift (nargs + 1)) bl) in
+        let theta = mkCase (EConstr.contract_case env !evd (ci, lift (nargs + 1) p, Constr.map_invert (lift (nargs + 1)) iv, mkRel 1, Array.map (lift (nargs + 1)) bl)) in
         debug_case_info [`Case] ci;
         debug [`Case] "theta (in translated env) = " Environ.empty_env !evd theta;
         debug_string [`Case] (Printf.sprintf "nargs = %d, params = %d" nargs nparams);
@@ -415,7 +416,7 @@ and translate order evd env (t : constr) : constr =
         let p_R = compose_lam_assum lams_R t_R in
         let c_R = translate order evd env c in
         let bl_R = Array.map (translate order evd env) bl in
-        let tuple = (ci_R, p_R, Constr.NoInvert, c_R, bl_R) in
+        let tuple = (EConstr.contract_case env !evd (ci_R, p_R, Constr.NoInvert, c_R, bl_R)) in
         mkCase tuple
 
     | CoFix _ ->
@@ -728,7 +729,7 @@ and translate_fix order evd env t =
      * *)
     let rec traverse_cases env depth (args : constr list) typ typ_R term =
       match kind !evd term with
-        | Case (ci, p, _, c, branches) when test_admissible env c args p branches ->
+        | Case (ci, _, _, p, _, c, branches) when test_admissible env c args p branches ->
             process_case env depth args term
         | _ ->
             (* otherwise we have to perform some rewriting. *)
@@ -739,8 +740,8 @@ and translate_fix order evd env t =
             (* depth + narg is the position of fixpoints in env *)
             rewrite_fixpoints order evd env (depth + narg) fix term theta typ typ_R term_R
 
-    and test_admissible env c args predicate branches =
-       isRel !evd c && List.mem c args && Array.for_all (noccurn !evd (destRel !evd c)) branches &&
+    and test_admissible env c args _predicate branches =
+       isRel !evd c && List.mem c args && Array.for_all (fun (nas, br) -> noccurn !evd (destRel !evd c + Array.length nas) br) branches &&
        let typ = Retyping.get_type_of env !evd c in
        debug [`Fix] "typ = " env !evd typ;
        List.iteri (fun i x ->
@@ -756,7 +757,7 @@ and translate_fix order evd env t =
     and process_case env depth (fun_args : constr list) case =
 
         debug [`Fix] "case = " env !evd case;
-        let (ci, p, iv, c, bl) = destCase !evd case in
+        let (ci, p, iv, c, bl) = EConstr.expand_case env !evd (destCase !evd case) in
         debug [`Fix] "predicate = " env !evd p;
         let c_R = translate order evd env c in
         let ci_R = translate_case_info order env ci in
@@ -834,7 +835,7 @@ and translate_fix order evd env t =
             ) bl
           end
         in
-        mkCase (ci_R, p_R, iv, c_R, bl_R)
+        mkCase (EConstr.contract_case env !evd (ci_R, p_R, iv, c_R, bl_R))
     in
     let (_, ft_R, bk, bk_R) = ftbk_R.(n) in
     let nfun_letins = nfun + narg - nrealargs.(n) in
