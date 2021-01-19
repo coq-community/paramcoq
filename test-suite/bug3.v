@@ -1,13 +1,9 @@
-
 Declare ML Module "paramcoq".
-
-
 
 Require Import NPeano.
 Require Import Recdef.
 Set Implicit Arguments.
-Require Import Omega.
-
+Require Import Lia.
 
 Fixpoint subS (n m : nat) {struct n} : nat :=
   match n return  nat with
@@ -17,8 +13,6 @@ Fixpoint subS (n m : nat) {struct n} : nat :=
            | S l => subS k l
            end
   end.
-
-
 
 Definition modS :=
 fun x y : nat => match y with
@@ -45,8 +39,8 @@ end.
 Proof.
 - intros m n k Heq. rewrite modS_same.
   simpl.
-  omega.
-- exact lt_wf.
+  lia.
+- exact Wf_nat.lt_wf.
 Defined.
 
 Ltac destruct_reflexivity := 
