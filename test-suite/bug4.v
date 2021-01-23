@@ -2,7 +2,7 @@
 Declare ML Module "paramcoq".
 
 Require Import NPeano.
-Require Import Omega.
+Require Import PArith.
 
 Print BinPosDef.Pos.sub_mask.
 
