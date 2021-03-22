@@ -52,50 +52,50 @@ END
 VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF
 | [ "Parametricity" ref(c) ] ->
   {
-    command_reference default_arity (Constrintern.intern_reference c) None
+    command_reference default_arity (intern_reference_to_name c) None
   }
 | [ "Parametricity" reference(c) "as" ident(name)] ->
   {
-    command_reference default_arity (Constrintern.intern_reference c) (Some name)
+    command_reference default_arity (intern_reference_to_name c) (Some name)
   }
 | [ "Parametricity" reference(c) "qualified" ] ->
   {
-    command_reference ~fullname:true default_arity (Constrintern.intern_reference c) None
+    command_reference ~fullname:true default_arity (intern_reference_to_name c) None
   }
 | [ "Parametricity" reference(c) "arity" int(arity) ] ->
   {
-    command_reference arity (Constrintern.intern_reference c) None
+    command_reference arity (intern_reference_to_name c) None
   }
 | [ "Parametricity" reference(c) "arity" int(arity) "as" ident(name) ] ->
   {
-    command_reference arity (Constrintern.intern_reference c) (Some name)
+    command_reference arity (intern_reference_to_name c) (Some name)
   }
 | [ "Parametricity" reference(c) "arity" int(arity) "qualified" ] ->
   {
-    command_reference ~fullname:true arity (Constrintern.intern_reference c) None
+    command_reference ~fullname:true arity (intern_reference_to_name c) None
   }
 | [ "Parametricity" reference(c)  "as" ident(name) "arity" integer(arity) ] ->
   {
-    command_reference arity (Constrintern.intern_reference c) (Some name)
+    command_reference arity (intern_reference_to_name c) (Some name)
   }
 END
 
 VERNAC COMMAND EXTEND AbstractionRecursive CLASSIFIED AS SIDEFF
 | [ "Parametricity" "Recursive" reference(c) ] ->
   {
-    command_reference_recursive default_arity (Constrintern.intern_reference c)
+    command_reference_recursive default_arity (intern_reference_to_name c)
   }
 | [ "Parametricity" "Recursive" reference(c) "arity" integer(arity) ] ->
   {
-    command_reference_recursive arity (Constrintern.intern_reference c)
+    command_reference_recursive arity (intern_reference_to_name c)
   }
 | [ "Parametricity" "Recursive" reference(c) "qualified" ] ->
   {
-    command_reference_recursive ~fullname:true default_arity (Constrintern.intern_reference c)
+    command_reference_recursive ~fullname:true default_arity (intern_reference_to_name c)
   }
 | [ "Parametricity" "Recursive" reference(c) "arity" integer(arity) "qualified" ] ->
   {
-    command_reference_recursive ~fullname:true arity (Constrintern.intern_reference c)
+    command_reference_recursive ~fullname:true arity (intern_reference_to_name c)
   }
 END
 
