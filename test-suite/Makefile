@@ -17,8 +17,9 @@ wadler.vo: wadler.v Parametricity.vo
 bug.vo: bug.v Parametricity.vo
 bug%.vo: bug%.v Parametricity.vo
 
+# native eats too much memory, see eg https://gitlab.com/coq/coq/-/jobs/1144081161
 %.vo: %.v
-	$(COQC) $(PARAMLIBS) $<
+	$(COQC) $(PARAMLIBS) -native-compiler no $<
 
 ide:: Parametricity.vo
 	$(COQBIN)coqide -debug $(PARAMLIBS) $(EXAMPLES)
