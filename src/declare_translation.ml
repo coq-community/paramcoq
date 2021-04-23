@@ -23,6 +23,12 @@ let check_nothing_ongoing () =
   if !ongoing_translation then
     error (Pp.str "Some terms are being translated, please prove pending obligations before starting a new one. End them with the command 'Parametricity Done'.")
 
+let intern_reference_to_name qualid =
+  match Constrintern.intern_reference qualid with
+  | Some x -> x
+  | None ->
+      error Pp.(Libnames.pr_qualid qualid ++ str " does not refer to a global constant")
+
 let obligation_message () =
   let open Pp in
   msg_notice (str "The parametricity tactic generated generated proof obligations. "
