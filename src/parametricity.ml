@@ -1057,6 +1057,41 @@ let rec translate_mind_body name order evdr env kn b inst =
   debug_string [`Inductive] "computing envs ...";
   debug_env [`Inductive] "translate_mind, env = \n" env !evdr;
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
+  let univs_ctx, b =
+    let ctx = match b.mind_universes, b.mind_record with
+      | Monomorphic (ctx, _), NotRecord -> ctx
+      | _ -> Univ.LSet.empty in
+    let ctx, subst, _ = Univ.LSet.fold (fun u ((s, c), m, i) ->
+        debug_string [`Inductive] ("u = " ^ Univ.Level.to_string u);
+        let u' = UnivGen.fresh_level () in
+        debug_string [`Inductive] ("u' = " ^ Univ.Level.to_string u');
+        (Univ.LSet.add u' s, Univ.Constraint.add (u', Le, u) c),
+        Univ.LMap.add u u' m, i + 1)
+      ctx
+      Univ.((LSet.empty, Constraint.empty), LMap.empty, 0) in
+    let packets =
+      Array.map (fun p ->
+          let arity = match p.mind_arity with
+            | RegularArity a ->
+               let ar = of_constr a.mind_user_arity in
+               let ar = to_constr !evdr (subst_univs_level_constr subst ar) in
+               let so = EConstr.mkSort a.mind_sort in
+               debug Debug.all "sort = " env !evdr so;
+               let so = to_constr !evdr (subst_univs_level_constr subst so) in
+               let so = Constr.destSort so in
+               RegularArity { mind_user_arity = ar; mind_sort = so }
+            | TemplateArity a ->
+               let u = Univ.subst_univs_level_universe subst a.template_level in
+               TemplateArity { template_level = u } in
+          { p with mind_arity = arity })
+      b.mind_packets in
+    let params =
+      List.map (fun c ->
+          let x, def, typ = fromDecl c in
+          let typ = subst_univs_level_constr subst (of_constr typ) in
+          toCDecl (x, def, to_constr !evdr typ))
+        b.mind_params_ctxt in
+    ctx, { b with mind_packets = packets ; mind_params_ctxt = params } in
   let envs =
     let params = subst_instance_context inst b.mind_params_ctxt in
     let env_params = push_rel_context (List.map of_rel_decl params) env in
@@ -1088,7 +1123,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   in
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let univs = match b.mind_universes with
-    | Monomorphic ctx -> Monomorphic_entry ctx
+    | Monomorphic _ -> Monomorphic_entry univs_ctx
     | Polymorphic _ -> Evd.univ_entry ~poly:true !evdr in
   let res = {
     mind_entry_record = None;

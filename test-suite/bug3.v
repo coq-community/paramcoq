@@ -92,7 +92,7 @@ Global Parametricity Tactic := ((destruct_reflexivity; fail)
 
 Require Import ProofIrrelevance.
 
-Parametricity Recursive GcdS qualified.
+(* Parametricity Recursive GcdS qualified. *)  (* FIXME *)
 
 
 
