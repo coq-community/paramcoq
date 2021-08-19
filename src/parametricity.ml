@@ -9,6 +9,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+module CVars = Vars
+
 open Util
 open Names
 open Vars
@@ -229,7 +231,7 @@ let apply_head_variables t n =
   mkApp (t, Array.of_list (List.rev l))
 
 let apply_head_variables_ctxt t ctxt =
-  mkApp (t, Context.Rel.to_extended_vect mkRel 0 ctxt)
+  mkApp (t, Context.Rel.instance mkRel 0 ctxt)
 
 (* Substitution in a signature. *)
 let substnl_rel_context subst n sign =
@@ -599,7 +601,7 @@ and translate_cofix order evd env t =
      let bk_R = liftn (nfun * order) (ft_R_len + order + 1) bk_R in
      let sub = range (fun k ->
                   mkApp (mkRel (ft_R_len + (nfun - n)*order - k ),
-                     Array.map (prime !evd order k) (Context.Rel.to_extended_vect mkRel 0 ft)))
+                     Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
      let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
@@ -615,7 +617,7 @@ and translate_cofix order evd env t =
     let narg =  Context.Rel.length lams in
     let body_R = translate order evd env_lams body in
     let (ft, ft_R, bk, bk_R) = ftbk_R.(n) in
-    let theta = mkApp (mkRel (nfun - n + narg), Context.Rel.to_extended_vect mkRel 0 lams) in
+    let theta = mkApp (mkRel (nfun - n + narg), Context.Rel.instance mkRel 0 lams) in
     (* lift to insert fixpoints variables before arguments
      * plus possible letins that were not in the type.
      * *)
@@ -702,7 +704,7 @@ and translate_fix order evd env t =
      let bk_R = liftn (nfun * order) (ft_R_len + order + 1) bk_R in
      let sub = range (fun k ->
                   mkApp (mkRel (ft_R_len + (nfun - n)*order - k ),
-                     Array.map (prime !evd order k) (Context.Rel.to_extended_vect mkRel 0 ft)))
+                     Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
      let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
@@ -716,7 +718,7 @@ and translate_fix order evd env t =
     let narg =  Context.Rel.length lams in
     (* rec_arg gives the position of the recursive argument *)
     let rec_arg = narg - (fst ln).(n) in
-    let args = Context.Rel.to_extended_list mkRel 0 lams in
+    let args = Context.Rel.instance_list mkRel 0 lams in
     let lams_R = translate_rel_context order evd env_rec lams in
     let env_lams = push_rel_context lams env_rec in
 
@@ -815,7 +817,7 @@ and translate_fix order evd env t =
                  mkApp (pcstr,
                         Array.of_list
                          (List.append lifted_i_params
-                           (Context.Rel.to_extended_list mkRel 0 realdecls)))
+                           (Context.Rel.instance_list mkRel 0 realdecls)))
                in
                let concls = constructors.(i).Inductiveops.cs_concl_realargs in
                assert (Array.length concls = i_nargs);
@@ -988,7 +990,7 @@ and weaken_unused_free_rels env_rc sigma term =
    debug_string [`Fix] (Printf.sprintf "[%s]" (String.concat ";" (List.map string_of_int sub_lst)));
    let sub = List.map mkRel sub_lst in
    let new_env_rc = apply_substitution_rel_context 1 sub [] (List.map toDecl env_rc) in
-   let new_vec = Context.Rel.to_extended_list mkRel 0 (List.map toDecl env_rc) in
+   let new_vec = Context.Rel.instance_list mkRel 0 (List.map toDecl env_rc) in
    let new_vec = List.filter (fun x -> let v = destRel sigma x in Int.Set.mem v set) new_vec in
    let new_vec = Array.of_list new_vec in
    assert (Array.length new_vec == Context.Rel.nhyps new_env_rc);
@@ -1034,7 +1036,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
     let endpoint = lift 1 (prime evd order k target) in
     let path = mkApp (mkRel 1,
        Array.map (fun x -> lift 1 (prime evd order k x))
-        (Context.Rel.to_extended_vect mkRel 0 (List.map toDecl env_rc)))
+        (Context.Rel.instance mkRel 0 (List.map toDecl env_rc)))
     in
     let sort = Retyping.get_type_of env !evdr typ in
     CoqConstants.add_constraints evdr sort;
@@ -1058,7 +1060,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   debug_env [`Inductive] "translate_mind, env = \n" env !evdr;
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let envs =
-    let params = subst_instance_context inst b.mind_params_ctxt in
+    let params = CVars.subst_instance_context inst b.mind_params_ctxt in
     let env_params = push_rel_context (List.map of_rel_decl params) env in
     let env_arities =
       List.fold_left (fun env ind ->
@@ -1078,7 +1080,7 @@ let rec translate_mind_body name order evdr env kn b inst =
 
   debug_string [`Inductive] "translatation of params ...";
   let mind_entry_params_R =
-    translate_mind_param order evdr env (subst_instance_context inst b.mind_params_ctxt)
+    translate_mind_param order evdr env (CVars.subst_instance_context inst b.mind_params_ctxt)
   in
   debug_string [`Inductive] "translatation of inductive ...";
   let mind_entry_inds_R =
