@@ -9,6 +9,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+module CVars = Vars
+
 open Util
 open Names
 open Vars
@@ -1058,7 +1060,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   debug_env [`Inductive] "translate_mind, env = \n" env !evdr;
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let envs =
-    let params = subst_instance_context inst b.mind_params_ctxt in
+    let params = CVars.subst_instance_context inst b.mind_params_ctxt in
     let env_params = push_rel_context (List.map of_rel_decl params) env in
     let env_arities =
       List.fold_left (fun env ind ->
@@ -1078,7 +1080,7 @@ let rec translate_mind_body name order evdr env kn b inst =
 
   debug_string [`Inductive] "translatation of params ...";
   let mind_entry_params_R =
-    translate_mind_param order evdr env (subst_instance_context inst b.mind_params_ctxt)
+    translate_mind_param order evdr env (CVars.subst_instance_context inst b.mind_params_ctxt)
   in
   debug_string [`Inductive] "translatation of inductive ...";
   let mind_entry_inds_R =
