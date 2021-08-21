@@ -14,6 +14,7 @@ The plugin is still in an experimental state. It is not very user friendly (lack
 
 build: [make "-j%{jobs}%" ]
 install: [make "install"]
+run-test: [make "-C" "test-suite" "examples"]
 depends: [
   "coq" {= "dev" }
 ]
