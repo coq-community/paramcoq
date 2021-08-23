@@ -13,7 +13,10 @@ The plugin is still in an experimental state. It is not very user friendly (lack
 """
 
 build: [make "-j%{jobs}%" ]
-install: [make "install"]
+install: [
+  [make "install"]
+  [make "-C" "test-suite" "examples"] {with-test}
+]
 depends: [
   "coq" {= "dev" }
 ]
