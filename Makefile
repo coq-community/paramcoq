@@ -1,14 +1,16 @@
-# -*- Makefile -*-
-.PHONY: coq clean
+all: Makefile.coq
+	@+$(MAKE) -f Makefile.coq all
 
-coq:: Makefile.coq
-	$(MAKE) -f Makefile.coq
+clean: Makefile.coq
+	@+$(MAKE) -f Makefile.coq cleanall
+	@rm -f Makefile.coq Makefile.coq.conf
 
-Makefile.coq: Make.cfg
-	coq_makefile -f Make.cfg -o Makefile.coq
+Makefile.coq: _CoqProject
+	$(COQBIN)coq_makefile -f _CoqProject -o Makefile.coq
 
-distclean:
-	rm -f Makefile.coq Makefile.coq.conf Makefile.coq.bak .coqdeps.d
+force _CoqProject Makefile: ;
 
-install:
-	$(MAKE) -f Makefile.coq install
+%: Makefile.coq force
+	@+$(MAKE) -f Makefile.coq $@
+
+.PHONY: all clean force
