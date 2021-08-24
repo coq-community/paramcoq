@@ -9,10 +9,13 @@ license: "MIT"
 
 synopsis: "Plugin for generating parametricity statements to perform refinement proofs"
 description: """
-The plugin is still in an experimental state. It is not very user friendly (lack of good error messages) and still contains bugs. But is useable enough to "translate" a large chunk of standard library.
-"""
+A Coq plugin providing commands for generating parametricity statements.
+Typical applications of such statements are in data refinement proofs.
+Note that the plugin is still in an experimental state - it is not very user
+friendly (lack of good error messages) and still contains bugs. But it
+is usable enough to "translate" a large chunk of the standard library."""
 
-build: [make "-j%{jobs}%" ]
+build: [make "-j%{jobs}%"]
 install: [
   [make "install"]
   [make "-C" "test-suite" "examples"] {with-test}
