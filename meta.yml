@@ -42,9 +42,9 @@ license:
   identifier: MIT
 
 supported_coq_versions:
-  text: >
+  text: >-
     The master branch tracks the development version of Coq, see
-    releases for compatibility with released versions of Coq.
+    releases for compatibility with released versions of Coq
   opam: '{= "dev" }'
 
 categories:

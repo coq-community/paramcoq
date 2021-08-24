@@ -45,8 +45,7 @@ is usable enough to "translate" a large chunk of the standard library.
 - Coq-community maintainer(s):
   - Pierre Roux ([**@proux01**](https://github.com/proux01))
 - License: [MIT License](LICENSE)
-- Compatible Coq versions: The master branch tracks the development version of Coq, see releases for compatibility with released versions of Coq.
-
+- Compatible Coq versions: The master branch tracks the development version of Coq, see releases for compatibility with released versions of Coq
 - Additional dependencies: none
 - Coq namespace: `Param`
 - Related publication(s):
