@@ -120,7 +120,7 @@ Realizer <constant_or_variable> [as <name>] [arity <n>] := <term>.
 ```
 
 Note that translating a term or module may lead to proof obligations (for some
-fixpoints and opaque terms if you did not import `ProofIrrelevence`). You can
+fixpoints and opaque terms if you did not import `ProofIrrelevence`). You need to
 declare a tactic to solve such proof obligations:
 ```coq
 [Global|Local] Parametricity Tactic := <tactic>.
