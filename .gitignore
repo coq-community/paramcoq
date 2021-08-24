@@ -43,3 +43,6 @@ _build
 
 # coqpp generated file
 src/abstraction.ml
+
+# lia cache
+.lia.cache
