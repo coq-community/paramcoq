@@ -1,3 +1,4 @@
+-R theories Param
 -R src Param
 -I src
 src/debug.ml
@@ -6,3 +7,4 @@ src/relations.ml
 src/declare_translation.ml
 src/abstraction.mlg
 src/paramcoq.mlpack
+theories/Param.v
