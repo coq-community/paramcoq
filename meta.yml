@@ -43,7 +43,7 @@ license:
 
 supported_coq_versions:
   text: >-
-    The master branch tracks the development version of Coq, see
+    The v8.13 branch tracks version 8.13 of Coq, see
     releases for compatibility with released versions of Coq
   opam: '{>= "8.13" & < "8.14~"}'
 
