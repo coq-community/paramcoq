@@ -21,7 +21,7 @@ install: [
   [make "-C" "test-suite" "examples"] {with-test}
 ]
 depends: [
-  "coq" {= "dev" }
+  "coq" {>= "8.14" & < "8.15~"}
 ]
 
 tags: [

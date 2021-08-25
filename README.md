@@ -4,14 +4,14 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 --->
 # Paramcoq
 
-[![Docker CI][docker-action-shield]][docker-action-link]
+[![Nix CI][nix-action-shield]][nix-action-link]
 [![Contributing][contributing-shield]][contributing-link]
 [![Code of Conduct][conduct-shield]][conduct-link]
 [![Zulip][zulip-shield]][zulip-link]
 [![DOI][doi-shield]][doi-link]
 
-[docker-action-shield]: https://github.com/coq-community/paramcoq/workflows/Docker%20CI/badge.svg?branch=master
-[docker-action-link]: https://github.com/coq-community/paramcoq/actions?query=workflow:"Docker%20CI"
+[nix-action-shield]: https://github.com/coq-community/paramcoq/workflows/Nix%20CI/badge.svg?branch=v8.14
+[nix-action-link]: https://github.com/coq-community/paramcoq/actions?query=workflow:"Nix%20CI"
 
 [contributing-shield]: https://img.shields.io/badge/contributions-welcome-%23f7931e.svg
 [contributing-link]: https://github.com/coq-community/manifesto/blob/master/CONTRIBUTING.md
@@ -45,7 +45,7 @@ is usable enough to "translate" a large chunk of the standard library.
 - Coq-community maintainer(s):
   - Pierre Roux ([**@proux01**](https://github.com/proux01))
 - License: [MIT License](LICENSE)
-- Compatible Coq versions: The master branch tracks the development version of Coq, see releases for compatibility with released versions of Coq
+- Compatible Coq versions: The v8.14 branch supports version 8.14 of Coq, see releases for compatibility with released versions of Coq
 - Additional dependencies: none
 - Coq namespace: `Param`
 - Related publication(s):
