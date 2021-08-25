@@ -60,6 +60,8 @@ namespace: Param
 
 opam-file-maintainer: 'Pierre Roux <pierre.roux@onera.fr>'
 
+opam-file-version: '8.14.dev'
+
 tested_coq_opam_versions:
 - version: '8.14'
 
