@@ -1,6 +1,9 @@
 # Generated Makefile
-/Makefile.coq
-/Makefile.coq.conf
+Makefile.coq
+Makefile.coq.conf
+
+# Dune
+_build
 
 # Make dependencies
 *.d
@@ -40,3 +43,6 @@
 
 # coqpp generated file
 src/abstraction.ml
+
+# lia cache
+.lia.cache

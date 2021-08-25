@@ -1,0 +1,5 @@
+(coq.theory
+ (name Param)
+ (package coq-paramcoq)
+ (synopsis "Plugin for generating parametricity statements to perform refinement proofs")
+ (libraries coq-paramcoq.plugin))

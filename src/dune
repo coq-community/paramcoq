@@ -1,11 +1,8 @@
 (library
  (name paramcoq)
- (public_name coq.plugins.paramcoq)
- (synopsis "Coq Plugin for Parametricity")
- (flags :standard -warn-error -3)
- (libraries coq.plugins.ltac))
+ (public_name coq-paramcoq.plugin)
+ (synopsis "Plugin for generating parametricity statements to perform refinement proofs")
+ (flags :standard -rectypes -w -9-27)
+ (libraries coq-core.plugins.ltac))
 
-(rule
- (targets abstraction.ml)
- (deps (:pp-file abstraction.mlg) )
- (action (run coqpp %{pp-file})))
+(coq.pp (modules abstraction))
