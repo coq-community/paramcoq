@@ -1,13 +1,17 @@
+<!---
+This file was generated from `meta.yml`, please do not edit manually.
+Follow the instructions on https://github.com/coq-community/templates to regenerate.
+--->
 # Paramcoq
 
-[![CI][action-shield]][action-link]
+[![Docker CI][docker-action-shield]][docker-action-link]
 [![Contributing][contributing-shield]][contributing-link]
 [![Code of Conduct][conduct-shield]][conduct-link]
 [![Zulip][zulip-shield]][zulip-link]
 [![DOI][doi-shield]][doi-link]
 
-[action-shield]: https://github.com/coq-community/paramcoq/workflows/CI/badge.svg?branch=master
-[action-link]: https://github.com/coq-community/paramcoq/actions?query=workflow%3ACI
+[docker-action-shield]: https://github.com/coq-community/paramcoq/workflows/Docker%20CI/badge.svg?branch=master
+[docker-action-link]: https://github.com/coq-community/paramcoq/actions?query=workflow:"Docker%20CI"
 
 [contributing-shield]: https://img.shields.io/badge/contributions-welcome-%23f7931e.svg
 [contributing-link]: https://github.com/coq-community/manifesto/blob/master/CONTRIBUTING.md
@@ -22,8 +26,11 @@
 [doi-shield]: https://zenodo.org/badge/DOI/10.4230/LIPIcs.CSL.2012.399.svg
 [doi-link]: https://doi.org/10.4230/LIPIcs.CSL.2012.399
 
-The plugin is still in an experimental state. It is not very user friendly (lack of good error messages) and still contains bugs. But is useable enough to "translate" a large chunk of standard library.
-
+A Coq plugin providing commands for generating parametricity statements.
+Typical applications of such statements are in data refinement proofs.
+Note that the plugin is still in an experimental state - it is not very user
+friendly (lack of good error messages) and still contains bugs. But it
+is usable enough to "translate" a large chunk of the standard library.
 
 ## Meta
 
@@ -37,9 +44,8 @@ The plugin is still in an experimental state. It is not very user friendly (lack
   - Matthieu Sozeau
 - Coq-community maintainer(s):
   - Pierre Roux ([**@proux01**](https://github.com/proux01))
-- License: [MIT](LICENSE)
-- Compatible Coq versions: The master branch tracks the development version of Coq, see releases for compatibility with released versions of Coq.
-
+- License: [MIT License](LICENSE)
+- Compatible Coq versions: The master branch tracks the development version of Coq, see releases for compatibility with released versions of Coq
 - Additional dependencies: none
 - Coq namespace: `Param`
 - Related publication(s):
@@ -65,37 +71,57 @@ make install
 ```
 
 
-Available commands
-------------------
+## Usage and Commands
 
-The default arity is 2.
+To load the plugin and make its commands available:
+```coq
+From Param Require Import Param.
+```
 
-- Parametricity *ident* as *name* [arity *n*].
+The command scheme for named translations is:
+```
+Parametricity <ident> as <name> [arity <n>].
+```
+For example, the following command generates a translation named `my_param`
+of the constant or inductive `my_id` with arity 2 (the default):
+```coq
+Parametricity my_id as my_param.
+```
 
-Declare the translation named *name* from the translation of the constant or inductive *ident*.
+The command scheme for automatically named translations is:
+```coq
+Parametricity [Recursive] <ident> [arity <n>] [qualified].
+```
+Such commands generate and name translations based on the given identifier.
+The `Recursive` option can be used to recursively translate all the constants
+and inductives which are used by the constant or inductive with the given
+identifier. The `qualified` option allows you to use a qualified default name
+for the translated constants and inductives. The default name then has the form
+`Module_o_Submodule_o_my_id` if the identifier `my_id` is declared in the
+`Module.Submodule` namespace.
 
-- Parametricity [Recursive] *ident* [arity *n*] [qualified].
+Instead of using identifiers, you can provide explicit terms to translate,
+according to the following command scheme:
+```coq
+Parametricity Translation <term> [as <name>] [arity <n>].
+```
+This defines a new constant containing the parametricity translation of
+the given term.
 
-The default name for the translation of the constant or inductive *ident* is automatically generated (from its unqualified name).
-You can use the `Recursive` option to recursively translate all the constants and inductives which are used by *ident*.
-You can use the `qualified` option to use a qualified default name for the translated constants and inductives. The default name then has the form `Module_o_Submodule_o_ident` if *ident* lies in the `Module.Submodule` namespace.
+To recursively translate everything in a module:
+```coq
+Parametricity Module <module_path>.
+```
 
-- Parametricity Translation *term* [as *name*] [arity *n*].
+When translating terms containing section variables or axioms,
+it may be useful to declare a term to be the translation of a constant:
+```coq
+Realizer <constant_or_variable> [as <name>] [arity <n>] := <term>.
+```
 
-Define a new constant named *name* obtained by computing the parametricity translation of *term*.
-
-- Parametricity Module *modulepath*.
-
-Recursively translate everything in a module.
-
-- Realizer *constant or variable* [as *name*] [arity *n*] := *term*.
-
-Declare *term* to be the translation of a constant.
-Useful to translate terms containing section variables, or axioms.
-
-Note that both translating a term or module may lead to proof obligations (for some fixpoints and opaque terms if you did not import `ProofIrrelevence`).
-
-- [Global | Local] Parametricity Tactic := t.
-
-Use the tactic t to solve proof obligations generated by the `Parametricity` command.
-
+Note that translating a term or module may lead to proof obligations (for some
+fixpoints and opaque terms if you did not import `ProofIrrelevence`). You need to
+declare a tactic to solve such proof obligations:
+```coq
+[Global|Local] Parametricity Tactic := <tactic>.
+```
