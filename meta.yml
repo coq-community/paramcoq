@@ -6,7 +6,7 @@ community: true
 action: true
 plugin: true
 doi: 10.4230/LIPIcs.CSL.2012.399
-branch: master
+branch: 'master'
 
 synopsis: Plugin for generating parametricity statements to perform refinement proofs
 
@@ -58,6 +58,8 @@ keywords:
 namespace: Param
 
 opam-file-maintainer: 'Pierre Roux <pierre.roux@onera.fr>'
+
+opam-file-version: 'dev'
 
 tested_coq_opam_versions:
 - version: 'dev'
@@ -112,7 +114,7 @@ documentation: |-
   ```
 
   Note that translating a term or module may lead to proof obligations (for some
-  fixpoints and opaque terms if you did not import `ProofIrrelevence`). You can
+  fixpoints and opaque terms if you did not import `ProofIrrelevence`). You need to
   declare a tactic to solve such proof obligations:
   ```coq
   [Global|Local] Parametricity Tactic := <tactic>.
