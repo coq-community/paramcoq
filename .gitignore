@@ -1,6 +1,6 @@
 # Generated Makefile
-/Makefile.coq
-/Makefile.coq.conf
+Makefile.coq
+Makefile.coq.conf
 
 # Make dependencies
 *.d
@@ -38,3 +38,7 @@
 
 # coqpp generated file
 src/abstraction.ml
+
+# lia cache
+.lia.cache
+status
