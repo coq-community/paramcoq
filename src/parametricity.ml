@@ -603,7 +603,6 @@ and translate_cofix order evd env t =
                      Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
-     let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
 
@@ -706,7 +705,6 @@ and translate_fix order evd env t =
                      Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
-     let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
   (* env_rec is the environement under fixpoints. *)
