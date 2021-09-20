@@ -112,7 +112,7 @@ let declare_inductive name ?(continuation = default_continuation) arity evd env 
   debug_evar_map [`Inductive] "evar_map inductive " env !evd;
   let size = Declarations.(Array.length mut_body.mind_packets) in
   let mut_ind_R = DeclareInd.declare_mutual_inductive_with_eliminations translation_entry
-                  Names.Id.Map.empty [] in
+                  (Monomorphic_entry Univ.ContextSet.empty, Names.Id.Map.empty) [] in
   for k = 0 to size-1 do
     Relations.declare_inductive_relation arity (mut_ind, k) (mut_ind_R, k)
   done;

@@ -1090,15 +1090,21 @@ let rec translate_mind_body name order evdr env kn b inst =
   in
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let univs = match b.mind_universes with
-    | Monomorphic ctx -> Monomorphic_entry ctx
-    | Polymorphic _ -> fst (Evd.univ_entry ~poly:true !evdr) in
+    | Monomorphic ->
+      begin match b.mind_template with
+      | None -> Monomorphic_ind_entry
+      | Some t -> Template_ind_entry t.Declarations.template_context
+      end
+    | Polymorphic _ ->
+      let uctx, _ = (Evd.univ_entry ~poly:true !evdr) in
+      match uctx with Polymorphic_entry uctx -> Polymorphic_ind_entry uctx | _ -> assert false
+  in
   let res = {
     mind_entry_record = None;
     mind_entry_finite = b.mind_finite;
     mind_entry_params = mind_entry_params_R;
     mind_entry_inds = mind_entry_inds_R;
     mind_entry_universes = univs;
-    mind_entry_template = Option.has_some b.mind_template;
     mind_entry_variance = None;
     mind_entry_private = b.mind_private;
   } in
