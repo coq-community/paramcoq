@@ -1091,7 +1091,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let univs = match b.mind_universes with
     | Monomorphic ctx -> Monomorphic_entry ctx
-    | Polymorphic _ -> Evd.univ_entry ~poly:true !evdr in
+    | Polymorphic _ -> fst (Evd.univ_entry ~poly:true !evdr) in
   let res = {
     mind_entry_record = None;
     mind_entry_finite = b.mind_finite;
