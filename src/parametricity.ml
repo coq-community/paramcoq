@@ -13,7 +13,6 @@ module CVars = Vars
 
 open Util
 open Names
-open Vars
 open Environ
 open EConstr
 open Vars
@@ -468,7 +467,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             let fold = mkConstU cst in
             let (def, _) = Opaqueproof.force_proof Library.indirect_accessor table op in
             let _ = Opaqueproof.force_constraints Library.indirect_accessor table op in
-            let def = subst_instance_constr names def in
+            let def = CVars.subst_instance_constr names def in
             let etyp = of_constr typ in
             let edef = of_constr def in
             let pred = mkLambda (Context.make_annot Anonymous Sorts.Relevant, etyp, substl (range (fun _ -> mkRel 1) order) (relation order evd env etyp)) in
@@ -604,7 +603,6 @@ and translate_cofix order evd env t =
                      Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
-     let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
 
@@ -707,7 +705,6 @@ and translate_fix order evd env t =
                      Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
-     let lift_rel_context n = Termops.map_rel_context_with_binders (liftn n) in
      compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
   (* env_rec is the environement under fixpoints. *)
@@ -1047,7 +1044,6 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
 
 
 
-
 open Entries
 open Declarations
 
@@ -1151,7 +1147,9 @@ and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params,
       begin
         debug_string [`Inductive] "Computing constructors";
         let l = Array.to_list e.mind_user_lc in
-        let l = List.map (subst_instance_constr inst) l in
+        let ntyps = Array.length mut_entry.mind_packets in
+        let l = List.map (Inductive.abstract_constructor_type_relatively_to_inductive_types_context ntyps (fst ikn)) l in
+        let l = List.map (CVars.subst_instance_constr inst) l in
         debug_string [`Inductive] "before translation :";
         List.iter (debug [`Inductive] "" env_arities !evdr) (List.map of_constr l);
         let l =  List.map (fun x -> snd (decompose_prod_n_assum !evdr p x)) (List.map of_constr l) in
