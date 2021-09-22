@@ -186,15 +186,14 @@ let debug_mutual_inductive_entry =
     in
     let mind_entry_polymorphic_pp =
       str (match entry.mind_entry_universes with
-           | Monomorphic_entry _ -> "false"
-           | Polymorphic_entry _ -> "true"
+           | Monomorphic_ind_entry | Template_ind_entry _ -> "false"
+           | Polymorphic_ind_entry _ -> "true"
           )
     in
     let mind_entry_universes_pp =
       match entry.mind_entry_universes with
-      | Monomorphic_entry ux ->
-         Univ.pr_universe_context_set UnivNames.(pr_with_global_universes empty_binders) ux
-      | Polymorphic_entry ux ->
+      | Monomorphic_ind_entry | Template_ind_entry _ -> mt ()
+      | Polymorphic_ind_entry ux ->
          Univ.pr_universe_context UnivNames.(pr_with_global_universes empty_binders) ux
     in
     let mind_entry_cumul_pp = bool (Option.has_some entry.mind_entry_variance) in
