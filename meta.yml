@@ -4,7 +4,6 @@ shortname: paramcoq
 organization: coq-community
 community: true
 action: true
-nix: true
 plugin: true
 doi: 10.4230/LIPIcs.CSL.2012.399
 branch: 'v8.14'
@@ -64,9 +63,6 @@ opam-file-version: '8.14.dev'
 
 tested_coq_opam_versions:
 - version: '8.14'
-
-tested_coq_nix_versions:
-- coq_version: 'v8.14'
 
 documentation: |-
   ## Usage and Commands
