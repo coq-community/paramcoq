@@ -457,7 +457,6 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             evd := evd';
             translate order evd env (of_constr (Option.get value))
         | OpaqueDef op ->
-            let table = Environ.opaque_tables env in
             let typ = Typeops.type_of_constant_in env (kn,names) in
             (* See Coq's commit dc60b8c8934ba6d0f107dc1d9368f1172bd6f945 *)
             (* let cte_constraints = Declareops.constraints_of_constant table cb in *)
@@ -465,8 +464,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             (* let evd' = Evd.add_constraints !evd cte_constraints in *)
             (* evd := evd'; *)
             let fold = mkConstU cst in
-            let (def, _) = Opaqueproof.force_proof Library.indirect_accessor table op in
-            let _ = Opaqueproof.force_constraints Library.indirect_accessor table op in
+            let (def, _) = Global.force_proof Library.indirect_accessor op in
             let def = CVars.subst_instance_constr names def in
             let etyp = of_constr typ in
             let edef = of_constr def in
