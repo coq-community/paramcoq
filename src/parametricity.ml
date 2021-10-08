@@ -24,7 +24,7 @@ let mkArrow x y = mkArrow x Sorts.Relevant y
 
 let mkannot x = Context.make_annot x Sorts.Relevant
 
-let error msg = CErrors.user_err ~hdr:"Parametricity plugin" msg
+let error msg = CErrors.user_err msg
 
 let new_evar_compat env evd uf_opaque_stmt =
   Evarutil.new_evar env evd uf_opaque_stmt
