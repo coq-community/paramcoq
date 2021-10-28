@@ -35,7 +35,7 @@ module CoqConstants = struct
   let add_constraints evdref univ =
     let env = Global.env () in
     let extract_type_sort poly_ref =
-      let evd, poly_ref = Evarutil.new_global !evdref poly_ref in
+      let evd, poly_ref = Evd.fresh_global (Global.env ()) !evdref poly_ref in
       evdref := evd;
       let ref_type = Retyping.get_type_of env !evdref poly_ref in
       let ref_sort =
@@ -45,7 +45,7 @@ module CoqConstants = struct
       evdref := Evarconv.unify_leq_delay env !evdref univ ref_sort
     in
     let extract_pred_sort poly_ref =
-      let evd, poly_ref = Evarutil.new_global !evdref poly_ref in
+      let evd, poly_ref = Evd.fresh_global (Global.env ()) !evdref poly_ref in
       evdref := evd;
       let ref_type = Retyping.get_type_of env !evdref poly_ref in
       let ref_sort =
