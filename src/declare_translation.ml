@@ -196,14 +196,10 @@ let rec list_continuation final f l _ = match l with [] -> final ()
 let rec translate_module_command ?name arity r  =
   check_nothing_ongoing ();
   let qid = r in
-  try
-    let globdir = Nametab.locate_dir qid in
-    match globdir with
-    | DirModule { obj_mp = mp } ->
-       let mb = Global.lookup_module mp in
-       declare_module ?name arity mb
-    | _ -> assert false
-  with Not_found -> error Pp.(str "Unknown Module " ++ pr_qualid qid)
+  let mb = try Global.lookup_module (Nametab.locate_module qid)
+    with Not_found -> error Pp.(str "Unknown Module " ++ pr_qualid qid)
+  in
+  declare_module ?name arity mb
 
 and id_of_module_path mp =
  let open Names in
