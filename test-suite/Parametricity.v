@@ -56,7 +56,6 @@ Parametricity Module Logic.
 Parametricity Module Datatypes.
 Parametricity Module Specif.
 
-Parametricity Module Logic_Type.
 Parametricity Module Decimal.
 Parametricity Module Hexadecimal.
 Parametricity Module Number.
@@ -67,4 +66,4 @@ Parametricity Module Peano.
 Parametricity Module Wf.
 Parametricity Module Tactics.
 
-Export Logic_R Datatypes_R Logic_Type_R Specif_R Nat_R Peano_R Wf_R Tactics_R. 
+Export Logic_R Datatypes_R Specif_R Nat_R Peano_R Wf_R Tactics_R. 
