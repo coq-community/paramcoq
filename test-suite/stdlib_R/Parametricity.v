@@ -1,4 +1,4 @@
-Declare ML Module "paramcoq".
+Declare ML Module "coq-paramcoq.paramcoq".
 
 Ltac destruct_reflexivity := 
   intros ; repeat match goal with 

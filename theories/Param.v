@@ -1,1 +1,1 @@
-Declare ML Module "paramcoq".
+Declare ML Module "coq-paramcoq.paramcoq".

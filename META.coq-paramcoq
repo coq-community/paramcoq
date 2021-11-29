@@ -1,0 +1,9 @@
+package "paramcoq" (
+  requires = "coq-core.plugins.ltac"
+  archive(byte) = "paramcoq.cma"
+  archive(native) = "paramcoq.cmxa"
+  plugin(byte) = "paramcoq.cma"
+  plugin(native) = "paramcoq.cmxs"
+  directory = "src"
+)
+directory = "."
