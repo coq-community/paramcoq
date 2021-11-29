@@ -1,6 +1,9 @@
+# This file was generated from `meta.yml`, please do not edit manually.
+# Follow the instructions on https://github.com/coq-community/templates to regenerate.
+
 opam-version: "2.0"
 maintainer: "Pierre Roux <pierre.roux@onera.fr>"
-version: "dev"
+version: "8.15.dev"
 
 homepage: "https://github.com/coq-community/paramcoq"
 dev-repo: "git+https://github.com/coq-community/paramcoq.git"
@@ -21,7 +24,7 @@ install: [
   [make "-C" "test-suite" "examples"] {with-test}
 ]
 depends: [
-  "coq" {= "dev" }
+  "coq" {>= "8.15" & < "8.16~"}
 ]
 
 tags: [

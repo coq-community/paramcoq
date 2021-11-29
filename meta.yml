@@ -6,7 +6,7 @@ community: true
 action: true
 plugin: true
 doi: 10.4230/LIPIcs.CSL.2012.399
-branch: 'master'
+branch: 'v8.15'
 
 synopsis: Plugin for generating parametricity statements to perform refinement proofs
 
@@ -43,9 +43,9 @@ license:
 
 supported_coq_versions:
   text: >-
-    The master branch tracks the development version of Coq, see
+    The v8.15 branch supports version 8.15 of Coq, see
     releases for compatibility with released versions of Coq
-  opam: '{= "dev" }'
+  opam: '{>= "8.15" & < "8.16~"}'
 
 categories:
 - name: 'Miscellaneous/Coq Extensions'
@@ -59,10 +59,10 @@ namespace: Param
 
 opam-file-maintainer: 'Pierre Roux <pierre.roux@onera.fr>'
 
-opam-file-version: 'dev'
+opam-file-version: '8.15.dev'
 
 tested_coq_opam_versions:
-- version: 'dev'
+- version: '8.15'
 
 documentation: |-
   ## Usage and Commands
