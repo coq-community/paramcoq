@@ -1,1 +1,1 @@
-Declare ML Module "coq-paramcoq.paramcoq".
+Declare ML Module "coq-paramcoq.plugin".

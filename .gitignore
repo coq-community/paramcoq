@@ -1,6 +1,7 @@
 # Generated Makefile
 Makefile.coq
 Makefile.coq.conf
+META.coq-paramcoq
 
 # Dune
 _build
