@@ -38,10 +38,10 @@ let add (n : int) f =
   in
   relations := IntMap.add n (f translations) !relations
 
-let cache_relation (_, (n, x, x_R)) = 
+let cache_relation (n, x, x_R) =
   add n (GMap.add x x_R)
 
-let discharge_relation (_, (n, x, x_R)) = 
+let discharge_relation (n, x, x_R) =
   Some (n, x, x_R)
 
 let subst_relation (subst, (n, x, x_R)) = 
@@ -51,11 +51,11 @@ let in_relation = declare_object {(default_object "PARAMETRICITY") with
                    cache_function = cache_relation;
                    load_function = (fun _ -> cache_relation);
                    subst_function = subst_relation;
-                   classify_function = (fun obj -> Substitute obj);
+                   classify_function = (fun obj -> Substitute);
                    discharge_function = discharge_relation}
  
 let declare_relation n x x_R = 
- Lib.add_anonymous_leaf (in_relation (n, x, x_R))
+ Lib.add_leaf (in_relation (n, x, x_R))
  
 let declare_constant_relation (n : int) (c : Constant.t) (c_R : Constant.t) =
   declare_relation n (GlobRef.ConstRef c) (GlobRef.ConstRef c_R)
