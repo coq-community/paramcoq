@@ -61,20 +61,20 @@ module CoqConstants = struct
       Program.([coq_eq_ind (); coq_eq_refl (); coq_eq_rect ()]);
     extract_pred_sort (Program.coq_eq_rect ())
 
-  let eq evdref args =
-    let evd, t = Program.papp !evdref Program.coq_eq_ind args in
+  let eq env evdref args =
+    let evd, t = Program.papp env !evdref Program.coq_eq_ind args in
     evdref := evd; t
 
-  let eq_refl evdref args =
-    let evd, t = Program.papp !evdref Program.coq_eq_refl args in
+  let eq_refl env evdref args =
+    let evd, t = Program.papp env !evdref Program.coq_eq_refl args in
     evdref := evd; t
 
-  let transport evdref args =
-    let evd, t = Program.papp !evdref Program.coq_eq_rect args in
+  let transport env evdref args =
+    let evd, t = Program.papp env !evdref Program.coq_eq_rect args in
     evdref := evd; t
 
-  let proof_irrelevance evdref args =
-    let evd, t = Program.papp !evdref (fun () -> Coqlib.lib_ref "core.proof_irrelevance") args in
+  let proof_irrelevance env evdref args =
+    let evd, t = Program.papp env !evdref (fun () -> Coqlib.lib_ref "core.proof_irrelevance") args in
     evdref := evd; t
 
 end
@@ -470,7 +470,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             let edef = of_constr def in
             let pred = mkLambda (Context.make_annot Anonymous Sorts.Relevant, etyp, substl (range (fun _ -> mkRel 1) order) (relation order evd env etyp)) in
             let res = translate order evd env edef in
-            let uf_opaque_stmt = CoqConstants.eq evd [| etyp; edef; fold|] in
+            let uf_opaque_stmt = CoqConstants.eq env evd [| etyp; edef; fold|] in
             let evd', sort = Typing.sort_of env !evd etyp in
             evd := evd';
             let proof_opaque =
@@ -478,7 +478,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
                 if Sorts.is_prop sort then
                   (debug [`ProofIrrelevance] "def =" env !evd edef;
                   debug [`ProofIrrelevance] "fold =" env !evd fold;
-                  CoqConstants.proof_irrelevance evd [| etyp; edef; fold |])
+                  CoqConstants.proof_irrelevance env evd [| etyp; edef; fold |])
                 else
                   raise Not_found
               with e ->
@@ -487,7 +487,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
                 CoqConstants.add_constraints evd (mkSort sort);
                  hole
             in
-            CoqConstants.transport evd [| etyp; edef; pred; res; fold; proof_opaque |]
+            CoqConstants.transport env evd [| etyp; edef; pred; res; fold; proof_opaque |]
         | _ ->
             error
               (Pp.str (Printf.sprintf "The constant '%s' has no registered translation."
@@ -904,7 +904,7 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   in
   let env_rc = rel_context env in
   let env_rc = instantiate_fixpoint_in_rel_context (List.map fromDecl env_rc) in
-  let path = CoqConstants.eq evdr [| typ; source; target|] in
+  let path = CoqConstants.eq env evdr [| typ; source; target|] in
   debug [`Fix] "path" env !evdr path;
   let gen_rc, new_vec, path = weaken_unused_free_rels env_rc !evdr path in
   let gen_path_type = it_mkProd_or_LetIn path  gen_rc in
@@ -932,7 +932,7 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
     let path = mkApp (mkRel 1,
        Array.map (fun x -> lift 1 (prime evd order k x)) new_vec)
     in
-    CoqConstants.transport evdr
+    CoqConstants.transport env evdr
           [| index;
              base;
              pred; acc; endpoint; path |]) (lift 1 acc) order) in
@@ -1014,7 +1014,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
   in
   let env_rc = rel_context env in
   let env_rc = instantiate_fixpoint_in_rel_context (List.map fromDecl env_rc) in
-  let gen_path = it_mkProd_or_LetIn (CoqConstants.eq evdr [| typ; source; target|]) (List.map toDecl env_rc) in
+  let gen_path = it_mkProd_or_LetIn (CoqConstants.eq env evdr [| typ; source; target|]) (List.map toDecl env_rc) in
   debug [`Fix] "gen_path_type" env !evdr gen_path;
   let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
   evdr := evd;
@@ -1035,7 +1035,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
     in
     let sort = Retyping.get_type_of env !evdr typ in
     CoqConstants.add_constraints evdr sort;
-    CoqConstants.transport evdr
+    CoqConstants.transport env evdr
           [| index;
              base;
              pred; acc; endpoint; path |]) (lift 1 acc) order)
