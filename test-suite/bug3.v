@@ -1,4 +1,4 @@
-Declare ML Module "paramcoq".
+Declare ML Module "coq-paramcoq.plugin".
 
 Require Import NPeano.
 Require Import Recdef.
