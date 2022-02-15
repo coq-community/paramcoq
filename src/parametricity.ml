@@ -537,6 +537,7 @@ and translate_case_info order env ci =
     ci_ind = ci_ind;
     ci_npar = (order + 1) * ci.ci_npar;
     ci_relevance = ci.ci_relevance;
+    ci_lax_coind = ci.ci_lax_coind;
     ci_cstr_ndecls = Array.map (fun x -> (order + 1) * x) ci.ci_cstr_ndecls;
     ci_cstr_nargs = Array.map (fun x -> (order + 1) * x) ci.ci_cstr_nargs;
     ci_pp_info = translate_case_printing order env ci.ci_pp_info;
