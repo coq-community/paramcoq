@@ -101,7 +101,7 @@ let declare_abstraction ?(opaque = false) ?(continuation = default_continuation)
             continuation ()))
       | _ -> Declare.Hook.(make (fun _ -> continuation ()))
   in
-  let tactic = snd (Relations.get_parametricity_tactic ()) in
+  let tactic = Relations.get_parametricity_tactic () in
   add_definition ~tactic ~opaque ~poly ~scope ~kind ~hook name env evd a_R b_R
 
 let declare_inductive name ?(continuation = default_continuation) arity evd env (((mut_ind, _) as ind, inst)) =
@@ -179,7 +179,7 @@ let declare_realizer ?(continuation = default_continuation) ?kind ?real arity ev
     Pp.(msg_info (str (Printf.sprintf "'%s' is now a registered translation." (Names.Id.to_string name))));
     Relations.declare_relation arity gref dref;
     continuation ())) in
-  let tactic = snd (Relations.get_parametricity_tactic ()) in
+  let tactic = Relations.get_parametricity_tactic () in
   add_definition ~tactic ~opaque:false ~poly ~scope ~kind ~hook name env sigma real typ_R
 
 let realizer_command arity name var real =

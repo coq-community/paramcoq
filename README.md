@@ -123,5 +123,6 @@ Note that translating a term or module may lead to proof obligations (for some
 fixpoints and opaque terms if you did not import `ProofIrrelevence`). You need to
 declare a tactic to solve such proof obligations:
 ```coq
-[Global|Local] Parametricity Tactic := <tactic>.
+Parametricity Tactic := <tactic>.
 ```
+(supports global/export/local attributes like Obligation Tactic)

@@ -21,14 +21,13 @@ open Stdarg
 open Tacarg
 open Parametricity
 open Declare_translation
-open Attributes
 }
 
 VERNAC COMMAND EXTEND SetParametricityTactic CLASSIFIED AS SIDEFF
-| #[ locality; ]
+| #[ locality = Tactic_option.tac_option_locality; ]
   [ "Parametricity" "Tactic" ":=" tactic(t) ] -> {
     Relations.set_parametricity_tactic
-      (Locality.make_section_locality locality)
+      locality
       (Tacintern.glob_tactic t) }
 END
 
