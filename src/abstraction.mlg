@@ -12,7 +12,7 @@
 
 }
 
-DECLARE PLUGIN "parametricity"
+DECLARE PLUGIN "coq-paramcoq.plugin"
 
 {
 open Ltac_plugin
