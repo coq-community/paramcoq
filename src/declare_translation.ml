@@ -415,6 +415,7 @@ let command_reference_recursive ?(continuation = default_continuation) ?(fullnam
           if Names.GlobRef.Set_env.mem ref_ind visited
           || Relations.is_referenced arity ref_ind  then visacc else
           let nexts = Names.GlobRef.Map_env.find ref graph in
+          let nexts = Option.default Names.GlobRef.Set_env.empty nexts in
           let visited = Names.GlobRef.Set_env.add ref_ind visited in
           let visited, acc = fold_sort graph visited nexts f acc in
           let acc = f ref_ind acc in
