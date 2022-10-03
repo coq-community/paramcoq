@@ -220,10 +220,7 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
      let id_R = match name with Some id -> id | None -> translate_id arity id in
      debug_string [`Module] (Printf.sprintf "start module: '%s' (translating '%s')."
        (Names.Id.to_string id_R) (Names.Id.to_string id));
-     let mp_R = Global.start_module id_R in
-     (* I have no idea what I'm doing here : *)
-     let fs = Summary.freeze_summaries ~marshallable:false in
-     let _ = Lib.start_module None id_R mp_R fs in
+     let _mp_R = Declaremods.start_module None id_R [] (Declaremods.Check []) in
      list_continuation
      (fun _ ->
        debug_string [`Module] (Printf.sprintf "end module: '%s'." (Names.Id.to_string id_R));
