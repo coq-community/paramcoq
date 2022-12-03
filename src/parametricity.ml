@@ -475,7 +475,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             evd := evd';
             let proof_opaque =
               try
-                if Sorts.is_prop sort then
+                if Sorts.is_prop (ESorts.kind !evd sort) then
                   (debug [`ProofIrrelevance] "def =" env !evd edef;
                   debug [`ProofIrrelevance] "fold =" env !evd fold;
                   CoqConstants.proof_irrelevance env evd [| etyp; edef; fold |])
