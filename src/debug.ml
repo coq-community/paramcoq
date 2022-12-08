@@ -55,6 +55,7 @@ let debug_mode = ref false
 let set_debug_mode =
    Goptions.declare_bool_option
     { Goptions.optdepr  = false;
+      Goptions.optstage = Interp;
       Goptions.optkey   = ["Parametricity"; "Debug"];
       Goptions.optread  = (fun () -> !debug_mode);
       Goptions.optwrite = (:=) debug_mode }
