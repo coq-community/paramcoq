@@ -53,7 +53,7 @@ categories:
 keywords:
 - name: paramcoq
 - name: parametricity
-- name: ocaml module
+- name: OCaml modules
 
 namespace: Param
 
