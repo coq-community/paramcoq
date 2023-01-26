@@ -20,9 +20,7 @@ open Debug
 
 [@@@ocaml.warning "-40"]
 
-let mkArrow x y = mkArrow x Sorts.Relevant y
-
-let mkannot x = Context.make_annot x Sorts.Relevant
+let mkannot = Context.make_annot
 
 let error msg = CErrors.user_err msg
 
@@ -289,7 +287,9 @@ let rec relation order evd env (t : constr) : constr =
   debug_evar_map [`Relation]  "evd =" env !evd;
   debug [`Relation] "input =" env !evd t;
   let res = match kind !evd t with
-    | Sort _s -> fold_nat (fun _ -> mkArrow (mkRel order)) (prop_or_type env evd t) order
+    | Sort s ->
+      let r = Retyping.relevance_of_sort s in
+      fold_nat (fun _ -> mkArrow (mkRel order) r) (prop_or_type env evd t) order
     | Prod (x, a, b) ->
         let a_R = relation order evd env a in
         (* |G|, x1, x2 |- [x1,x2] in |a| *)
@@ -560,9 +560,10 @@ and translate_cofix order evd env t =
     if k = 0 then acc
     else
       let k = k-1 in
+      let r = lna.(n).binder_relevance in
       let fix_k = lift (n*order + k) (prime !evd order k fix) in
       let typ_k = lift (n*order + k) (prime !evd order k typ) in
-      let acc = mkLetIn (Context.make_annot (Name (Id.of_string (Printf.sprintf "fix_%s_%d" name (k+1)))) Sorts.Relevant,
+      let acc = mkLetIn (Context.make_annot (Name (Id.of_string (Printf.sprintf "fix_%s_%d" name (k+1)))) r,
                            fix_k, typ_k, acc) in
       letfix name fix typ n k acc
   in
@@ -660,9 +661,10 @@ and translate_fix order evd env t =
     if k = 0 then acc
     else
       let k = k-1 in
+      let r = lna.(n).binder_relevance in
       let fix_k = lift (n*order + k) (prime !evd order k fix) in
       let typ_k = lift (n*order + k) (prime !evd order k typ) in
-      let acc = mkLetIn (Context.make_annot (Name (Id.of_string (Printf.sprintf "fix_%s_%d" name (k+1)))) Sorts.Relevant,
+      let acc = mkLetIn (Context.make_annot (Name (Id.of_string (Printf.sprintf "fix_%s_%d" name (k+1)))) r,
                            fix_k, typ_k, acc) in
       letfix name fix typ n k acc
   in
@@ -923,9 +925,10 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
       @ (range (fun x -> lift 1 (prime evd order x source)) k)
     in
     let sort = Retyping.get_type_of env !evdr typ in
+    let r = Retyping.relevance_of_type env !evdr typ in
     CoqConstants.add_constraints evdr sort;
     let index = lift 1 (prime evd order k typ) in
-    let pred = mkLambda (mkannot (Name (Id.of_string "x")), index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
+    let pred = mkLambda (mkannot (Name (Id.of_string "x")) r, index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
     debug [`Fix] "pred = " env_R' !evdr pred;
     let base = lift 1 (prime evd order k source) in
     let endpoint = lift 1 (prime evd order k target) in
@@ -995,9 +998,10 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
   debug [`Fix] "source =" env !evdr source;
   debug [`Fix] "target =" env !evdr target;
   debug [`Fix] "typ =" env !evdr typ;
+  let r = Retyping.relevance_of_type env !evdr typ in
   if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
     let env_R = translate_env order evdr env in
-    let rc_order = rev_range (fun k -> mkannot (Name (Id.of_string (Printf.sprintf "rel_%d" k))), None,
+    let rc_order = rev_range (fun k -> mkannot (Name (Id.of_string (Printf.sprintf "rel_%d" k))) r, None,
                          lift k (prime !evdr order k typ)) order in
     let env_R = push_rel_context (List.map toDecl rc_order) env_R in
     debug [`Fix] "typ_R =" env_R !evdr typ_R
@@ -1018,7 +1022,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
   debug [`Fix] "gen_path_type" env !evdr gen_path;
   let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
   evdr := evd;
-  let let_gen acc = mkLetIn (mkannot (Name (Id.of_string "gen_path")), hole, gen_path, acc) in
+  let let_gen acc = mkLetIn (mkannot (Name (Id.of_string "gen_path")) Sorts.Relevant, hole, gen_path, acc) in
   let_gen @@ (fold_nat (fun k acc ->
     let pred_sub =
       (range (fun x -> lift 1 (prime evd order (k+1+x) target)) (order-1 - k))
@@ -1026,7 +1030,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
       @ (range (fun x -> lift 1 (prime evd order x source)) k)
     in
     let index = lift 1 (prime evd order k typ) in
-    let pred = mkLambda (mkannot (Name (Id.of_string "x")), index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
+    let pred = mkLambda (mkannot (Name (Id.of_string "x")) r, index, liftn 1 2 (substl pred_sub (liftn 1 (order + 1) typ_R))) in
     let base = lift 1 (prime evd order k source) in
     let endpoint = lift 1 (prime evd order k target) in
     let path = mkApp (mkRel 1,
@@ -1063,7 +1067,8 @@ let rec translate_mind_body name order evdr env kn b inst =
         let full_arity, cst =
            Inductive.constrained_type_of_inductive ((b, ind), inst)
         in
-        let env = push_rel (toDecl (mkannot (Names.Name typename), None, (of_constr full_arity))) env in
+        let r = ind.mind_relevance in
+        let env = push_rel (toDecl (mkannot (Names.Name typename) r, None, (of_constr full_arity))) env in
         let env = Environ.add_constraints cst env in
         env
       ) env (Array.to_list b.mind_packets)
