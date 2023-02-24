@@ -394,10 +394,10 @@ let command_reference ?(continuation = default_continuation) ?(fullname = false)
    in ()
 
 let command_reference_recursive ?(continuation = default_continuation) ?(fullname = false) arity gref =
-  let open Globnames in
   let gref= Globnames.canonical_gr gref in
   let label = Names.Label.of_id (Nametab.basename_of_global gref) in
-  let c = printable_constr_of_global gref in
+  (* Assumptions doesn't care about the universes *)
+  let c, _ = UnivGen.fresh_global_instance (Global.env()) gref in
   let (direct, graph, _) = Assumptions.traverse label c in
   let inductive_of_constructor ref =
     let open Globnames in
