@@ -288,7 +288,7 @@ let rec relation order evd env (t : constr) : constr =
   debug [`Relation] "input =" env !evd t;
   let res = match kind !evd t with
     | Sort s ->
-      let r = Retyping.relevance_of_sort s in
+      let r = Retyping.relevance_of_sort !evd s in
       fold_nat (fun _ -> mkArrow (mkRel order) r) (prop_or_type env evd t) order
     | Prod (x, a, b) ->
         let a_R = relation order evd env a in
