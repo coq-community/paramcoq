@@ -291,6 +291,7 @@ let rec relation order evd env (t : constr) : constr =
       let r = Retyping.relevance_of_sort !evd s in
       fold_nat (fun _ -> mkArrow (mkRel order) r) (prop_or_type env evd t) order
     | Prod (x, a, b) ->
+        let x = Context.map_annot (Namegen.named_hd env !evd a) x in
         let a_R = relation order evd env a in
         (* |G|, x1, x2 |- [x1,x2] in |a| *)
         let a_R = liftn order (order + 1) a_R in
@@ -330,7 +331,8 @@ let rec relation order evd env (t : constr) : constr =
     debug_string [`Relation] (Printf.sprintf "input has cast : %b" (has_cast !evd t));
     debug_mode := false;
     let env_R = translate_env order evd env in
-    let lams = range (fun k -> (Context.make_annot Anonymous Sorts.Relevant, None, lift k (prime !evd order k t))) order in
+    let na = Namegen.named_hd env !evd t Anonymous in
+    let lams = range (fun k -> (Context.make_annot (prime_name order k na) Sorts.Relevant, None, lift k (prime !evd order k t))) order in
     let env_R = push_rel_context (List.map toDecl lams) env_R in
     debug_mode := true;
     debug [`Relation] "output =" env_R !evd res;
@@ -349,7 +351,8 @@ and translate order evd env (t : constr) : constr =
 
     | Sort _ | Prod (_,_,_) ->
         (* [..., _ : t'', _ : t', _ : t] *)
-        let lams = range (fun k -> (Context.make_annot Anonymous Sorts.Relevant, lift k (prime !evd order k t))) order in
+        let na = Namegen.named_hd env !evd t Anonymous in
+        let lams = range (fun k -> (Context.make_annot (prime_name order k na) Sorts.Relevant, lift k (prime !evd order k t))) order in
         compose_lam lams (relation order evd env t)
 
     | App (c,l) ->
@@ -468,7 +471,8 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             let def = CVars.subst_instance_constr names def in
             let etyp = of_constr typ in
             let edef = of_constr def in
-            let pred = mkLambda (Context.make_annot Anonymous Sorts.Relevant, etyp, substl (range (fun _ -> mkRel 1) order) (relation order evd env etyp)) in
+            let na = Namegen.named_hd env !evd etyp Anonymous in
+            let pred = mkLambda (Context.make_annot na Sorts.Relevant, etyp, substl (range (fun _ -> mkRel 1) order) (relation order evd env etyp)) in
             let res = translate order evd env edef in
             let uf_opaque_stmt = CoqConstants.eq env evd [| etyp; edef; fold|] in
             let evd', sort = Typing.sort_of env !evd etyp in
