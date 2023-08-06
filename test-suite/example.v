@@ -61,7 +61,7 @@ boolfun_R = fun f1 f2 : bool -> bool =>
 Definition negb (x : bool) := 
   match x with 
    | true => false
-   | fale => true
+   | false => true
   end. 
 Parametricity negb.
 Check negb_R.

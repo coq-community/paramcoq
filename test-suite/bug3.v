@@ -17,7 +17,7 @@ Fixpoint subS (n m : nat) {struct n} : nat :=
 Definition modS :=
 fun x y : nat => match y with
                  | 0 => match (1 mod 0) with | 0 => 0 | _ => x end
-                 | S y' => subS y' (snd (divmod x y' 0 y'))
+                 | S y' => subS y' (snd (Nat.divmod x y' 0 y'))
                  end.
 
 Lemma subS_same : forall n m, subS  n m = Nat.sub n m.
