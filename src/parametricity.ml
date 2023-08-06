@@ -90,28 +90,28 @@ let hyps_from_rel_context env =
     (List.map fromDecl rctx) in
   aux [] 1 nc
 
-let compose_prod_assum rel_context init =
+let compose_prod_decls rel_context init =
  Context.Rel.fold_inside(fun (acc : constr) d ->
       match fromDecl d with
         (x, None, typ) -> mkProd (x, typ, acc)
       | (x, Some def, typ) -> mkLetIn (x, def, typ, acc)) ~init rel_context
 
-let compose_lam_assum rel_context init =
+let compose_lambda_decls rel_context init =
  Context.Rel.fold_inside(fun (acc : constr) d ->
   match fromDecl d with
   (x, None, typ) -> mkLambda (x, typ, acc)
          | (x, Some def, typ) -> mkLetIn (x, def, typ, acc)) ~init rel_context
 
-let decompose_prod_n_assum_by_prod sigma n =
+let decompose_prod_n_decls_by_prod sigma n =
   if n < 0 then
-    failwith "decompose_prod_n_assum_by_prod: integer parameter must be positive";
+    failwith "decompose_prod_n_decls_by_prod: integer parameter must be positive";
   let rec prodec_rec l n c =
     if Int.equal n 0 then l,c
     else match kind sigma c with
     | Prod (x,t,c)    -> prodec_rec (Context.Rel.add (toDecl (x,None, t)) l) (n-1) c
     | LetIn (x,b,t,c) -> prodec_rec (Context.Rel.add (toDecl (x,Some b, t)) l) n c
     | Cast (c,_,_)      -> prodec_rec l n c
-    | _c -> failwith "decompose_prod_n_assum_by_prod: not enough assumptions"
+    | _c -> failwith "decompose_prod_n_decls_by_prod: not enough assumptions"
   in
   prodec_rec Context.Rel.empty n
 
@@ -359,7 +359,7 @@ and translate order evd env (t : constr) : constr =
            (range (fun k -> prime !evd order k x) order)) l) in
         applist (translate order evd env c, List.rev l_R)
 
-    | Var i -> translate_variable order evd env i
+    | Var i -> translate_variable order env evd i
     | Meta _n -> not_implemented ~reason:"meta" env !evd t
     | Cast (c, k, t) ->
         let c_R = translate order evd env c in
@@ -404,7 +404,7 @@ and translate order evd env (t : constr) : constr =
         let ci_R = translate_case_info order env ci in
         debug_case_info [`Case] ci_R;
         debug [`Case] "p:" env !evd p;
-        let lams, t = decompose_lam_n_assum !evd (nargs + 1) p in
+        let lams, t = decompose_lambda_n_decls !evd (nargs + 1) p in
         let env_lams = push_rel_context lams env in
         debug [`Case] "t:" env_lams !evd t;
         let t_R = relation order evd env_lams t in
@@ -414,7 +414,7 @@ and translate order evd env (t : constr) : constr =
         let t_R = substl sub t_R in
         debug [`Case] "t_R" Environ.empty_env !evd t_R;
         let lams_R =  translate_rel_context order evd env lams in
-        let p_R = compose_lam_assum lams_R t_R in
+        let p_R = compose_lambda_decls lams_R t_R in
         let c_R = translate order evd env c in
         let bl_R = Array.map (translate order evd env) bl in
         let tuple = (EConstr.contract_case env !evd (ci_R, p_R, Constr.NoInvert, c_R, bl_R)) in
@@ -509,9 +509,11 @@ and translate_rel_context order evd env rc =
   in
   List.flatten ll
 
-and translate_variable order evd env v : constr =
+and translate_variable order env evdr v : constr =
   try
-    mkConst (Relations.get_variable order v)
+    let evd, (cst,u) = Evd.fresh_constant_instance ~rigid:Evd.univ_rigid env !evdr (Relations.get_variable order v) in
+    evdr := evd;
+    mkConstU (cst,EInstance.make u)
   with Not_found ->
     error
       (Pp.str (Printf.sprintf "The variable '%s' has no registered translation, provide one with the Realizer command." (Names.Id.to_string v)))
@@ -581,12 +583,12 @@ and translate_cofix order evd env t =
       let acc = letfix name fix typ n order acc in
       letfixs n acc
   in
-  let nrealargs = Array.map (fun x -> Context.Rel.nhyps (fst (decompose_lam_assum !evd x))) bl in
+  let nrealargs = Array.map (fun x -> Context.Rel.nhyps (fst (decompose_lambda_decls !evd x))) bl in
   (* [lna_R] is the translation of names of each fixpoints. *)
   let lna_R = Array.map (Context.map_annot (translate_name order)) lna in
   let ftbk_R = Array.mapi (fun i x ->
     let narg = nrealargs.(i) in
-    let ft, bk = decompose_prod_n_assum_by_prod !evd narg x in
+    let ft, bk = decompose_prod_n_decls_by_prod !evd narg x in
     let ft_R = translate_rel_context order evd env ft in
     let env_ft = push_rel_context ft env in
     let bk_R = relation order evd env_ft bk in
@@ -602,14 +604,14 @@ and translate_cofix order evd env t =
                      Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
-     compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
+     compose_prod_decls (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
 
   (* env_rec is the environement under fixpoints. *)
   let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =
-    let lams, body = decompose_lam_assum !evd bl.(n) in
+    let lams, body = decompose_lambda_decls !evd bl.(n) in
     let env_lams = push_rel_context lams env_rec in
     let narg =  Context.Rel.length lams in
     let body_R = translate order evd env_lams body in
@@ -624,7 +626,7 @@ and translate_cofix order evd env t =
     (* narg is the position of fixpoints in env *)
     let body_R = rewrite_cofixpoints order evd env_lams narg fix body theta bk bk_R body_R in
     let lams_R = translate_rel_context order evd env_rec lams in
-    let res = compose_lam_assum lams_R body_R in
+    let res = compose_lambda_decls lams_R body_R in
     if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
       let env_R = translate_env order evd env_rec in
       debug [`Fix] "res = " env_R !evd res;
@@ -682,14 +684,14 @@ and translate_fix order evd env t =
       let acc = letfix name fix typ n order acc in
       letfixs n acc
   in
-  let nrealargs = Array.map (fun x -> Context.Rel.nhyps (fst (decompose_lam_assum !evd x))) bl in
+  let nrealargs = Array.map (fun x -> Context.Rel.nhyps (fst (decompose_lambda_decls !evd x))) bl in
   (* [ln_R] is the translation of ln, the array of arguments for each fixpoints. *)
   let ln_R = (Array.map (fun x -> x*(order + 1) + order) ri, i) in
   (* [lna_R] is the translation of names of each fixpoints. *)
   let lna_R = Array.map (Context.map_annot (translate_name order)) lna in
   let ftbk_R = Array.mapi (fun i x ->
     let narg = nrealargs.(i) in
-    let ft, bk = decompose_prod_n_assum_by_prod !evd narg x in
+    let ft, bk = decompose_prod_n_decls_by_prod !evd narg x in
     let ft_R = translate_rel_context order evd env ft in
     let env_ft = push_rel_context ft env in
     let bk_R = relation order evd env_ft bk in
@@ -705,13 +707,13 @@ and translate_fix order evd env t =
                      Array.map (prime !evd order k) (Context.Rel.instance mkRel 0 ft)))
                order
      in
-     compose_prod_assum (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
+     compose_prod_decls (lift_rel_context (nfun * order) ft_R) (substl sub bk_R)) ftbk_R
   in
   (* env_rec is the environement under fixpoints. *)
   let env_rec = push_rec_types (lna, tl, bl) env in
   (* n : fix index *)
   let process_body n =
-    let lams, body = decompose_lam_assum !evd bl.(n) in
+    let lams, body = decompose_lambda_decls !evd bl.(n) in
     let narg =  Context.Rel.length lams in
     (* rec_arg gives the position of the recursive argument *)
     let rec_arg = narg - (fst ln).(n) in
@@ -785,14 +787,14 @@ and translate_fix order evd env t =
         in
         let theta = inst_args (depth + i_nargs + 1) fun_args_i in
         let sub = range (fun k -> prime !evd order k theta) order in
-        let lams, typ = decompose_lam_n_assum !evd (i_nargs + 1) p in
+        let lams, typ = decompose_lambda_n_decls !evd (i_nargs + 1) p in
         debug [`Fix] "theta = " (push_rel_context lams env) !evd theta;
         debug [`Fix] "theta = " Environ.empty_env !evd theta;
         let lams_R = translate_rel_context order evd env lams in
         let env_lams = push_rel_context lams env in
         let typ_R = relation order evd env_lams typ in
         let p_R = substl sub typ_R in
-        let p_R = compose_lam_assum lams_R p_R in
+        let p_R = compose_lambda_decls lams_R p_R in
         debug [`Fix] "predicate_R = " Environ.empty_env !evd p_R;
         let bl_R =
           debug_string [`Fix] (Printf.sprintf "dest_rel = %d" (destRel !evd c));
@@ -807,7 +809,7 @@ and translate_fix order evd env t =
                let (cstr, u) as cstru = constructors.(i).Inductiveops.cs_cstr in
                let pcstr = mkConstructU (cstr, EInstance.make u) in
                let nrealdecls = Inductiveops.constructor_nrealdecls env cstr in
-               let realdecls, b = decompose_lam_n_assum !evd nrealdecls b in
+               let realdecls, b = decompose_lambda_n_decls !evd nrealdecls b in
                let ei_params = List.map of_constr i_params in
                let lifted_i_params = List.map (lift nrealdecls) ei_params in
                let instr_cstr =
@@ -830,7 +832,7 @@ and translate_fix order evd env t =
                let typ_R = relation order evd env_lams typ in
                let env = push_rel_context realdecls env in
                let b_R = traverse_cases env (depth + nrealdecls) fun_args typ typ_R b in
-               compose_lam_assum realdecls_R b_R
+               compose_lambda_decls realdecls_R b_R
             ) bl
           end
         in
@@ -844,7 +846,7 @@ and translate_fix order evd env t =
     let bk = liftn nfun_letins (narg + 1) bk in
     let bk_R = liftn (nfun_letins * (order + 1)) ((order + 1) * narg + order + 1) bk_R in
     let body_R = traverse_cases env_lams 0 args bk bk_R body in
-    let res = compose_lam_assum lams_R body_R in
+    let res = compose_lambda_decls lams_R body_R in
     if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
       let env_R = translate_env order evd env_rec in
       debug [`Fix] "res = " env_R !evd res;
@@ -1128,7 +1130,7 @@ and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params,
   Debug.debug_string [`Inductive] (Printf.sprintf "mind_nparams_rec = %d" p);
   Debug.debug_string [`Inductive] (Printf.sprintf "mind_nparams_ctxt = %d" (List.length mut_entry.mind_params_ctxt));
   let _, arity =
-     decompose_prod_n_assum !evdr p (of_constr @@ Inductive.type_of_inductive ((mut_entry, e), inst))
+     decompose_prod_n_decls !evdr p (of_constr @@ Inductive.type_of_inductive ((mut_entry, e), inst))
   in
   debug [`Inductive] "Arity:" env_params !evdr arity;
   let arity_R =
@@ -1161,7 +1163,7 @@ and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params,
         let l = List.map (CVars.subst_instance_constr inst) l in
         debug_string [`Inductive] "before translation :";
         List.iter (debug [`Inductive] "" env_arities !evdr) (List.map of_constr l);
-        let l =  List.map (fun x -> snd (decompose_prod_n_assum !evdr p x)) (List.map of_constr l) in
+        let l =  List.map (fun x -> snd (decompose_prod_n_decls !evdr p x)) (List.map of_constr l) in
         debug_string [`Inductive] "remove uniform parameters :";
         List.iter (debug [`Inductive] "" env_arities_params !evdr) l;
         (*
