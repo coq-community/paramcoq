@@ -238,8 +238,11 @@ and declare_module ?(continuation = ignore) ?name arity mb  =
           state] *)
        let env = Global.env () in
        let evd = Evd.from_env env in
+       let evd, ucst =
+          Evd.(with_context_set univ_rigid evd (UnivGen.fresh_constant_instance env cst))
+       in
        let evdr = ref evd in
-       ignore(declare_realizer ~continuation arity evdr env None (mkConst cst))
+       ignore(declare_realizer ~continuation arity evdr env None (mkConstU (fst ucst, EInstance.make (snd ucst))))
 
      | (lab, SFBconst cb) ->
        let opaque =
