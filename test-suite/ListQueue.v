@@ -124,7 +124,7 @@ Lemma rev_app :
     rev (l1 ++ l2) = rev l2 ++ rev l1.
 induction l1.
 intro; symmetry; apply app_nil_r.
-intro; simpl; rewrite IHl1; rewrite app_ass.
+intro; simpl; rewrite IHl1; rewrite app_assoc.
 reflexivity.
 Defined.
 
