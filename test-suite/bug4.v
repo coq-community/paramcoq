@@ -1,7 +1,7 @@
 
 Declare ML Module "coq-paramcoq.plugin".
 
-Require Import NPeano.
+Require Import PeanoNat.
 Require Import PArith.
 
 Print BinPosDef.Pos.sub_mask.
