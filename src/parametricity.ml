@@ -426,8 +426,10 @@ and translate order evd env (t : constr) : constr =
     | CoFix _ ->
         translate_cofix order evd env t
 
-    | Proj (p, c) ->
-        mkProj (Projection.map (fun cte -> Names.MutInd.make1 (Names.Constant.canonical (Globnames.destConstRef (Relations.get_constant order (Names.Constant.make1 (Names.MutInd.canonical cte)))))) p, translate order evd env c)
+    | Proj (p, r, c) ->
+      mkProj (Projection.map (fun cte -> Names.MutInd.make1 (Names.Constant.canonical (Globnames.destConstRef (Relations.get_constant order (Names.Constant.make1 (Names.MutInd.canonical cte)))))) p,
+              r,
+              translate order evd env c)
 
     | _ -> not_implemented ~reason:"trapfall" env !evd t
  in
