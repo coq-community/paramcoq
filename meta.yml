@@ -5,7 +5,7 @@ organization: coq-community
 community: true
 action: true
 plugin: true
-doi: 10.4230/LIPIcs.CSL.2012.399
+doi: 10.4230/LIPIcs.CSL.2012.381
 branch: 'master'
 
 synopsis: Plugin for generating parametricity statements to perform refinement proofs
@@ -20,7 +20,7 @@ description: |-
 publications:
 - pub_title: Parametricity in an Impredicative Sort
   pub_url: https://hal.archives-ouvertes.fr/hal-00730913/
-  pub_doi: 10.4230/LIPIcs.CSL.2012.399
+  pub_doi: 10.4230/LIPIcs.CSL.2012.381
 
 authors:
 - name: Chantal Keller
