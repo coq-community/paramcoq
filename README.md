@@ -23,8 +23,8 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 [zulip-link]: https://coq.zulipchat.com/#narrow/stream/237663-coq-community-devs.20.26.20users
 
 
-[doi-shield]: https://zenodo.org/badge/DOI/10.4230/LIPIcs.CSL.2012.399.svg
-[doi-link]: https://doi.org/10.4230/LIPIcs.CSL.2012.399
+[doi-shield]: https://zenodo.org/badge/DOI/10.4230/LIPIcs.CSL.2012.381.svg
+[doi-link]: https://doi.org/10.4230/LIPIcs.CSL.2012.381
 
 A Coq plugin providing commands for generating parametricity statements.
 Typical applications of such statements are in data refinement proofs.
@@ -49,7 +49,7 @@ is usable enough to "translate" a large chunk of the standard library.
 - Additional dependencies: none
 - Coq namespace: `Param`
 - Related publication(s):
-  - [Parametricity in an Impredicative Sort](https://hal.archives-ouvertes.fr/hal-00730913/) doi:[10.4230/LIPIcs.CSL.2012.399](https://doi.org/10.4230/LIPIcs.CSL.2012.399)
+  - [Parametricity in an Impredicative Sort](https://hal.archives-ouvertes.fr/hal-00730913/) doi:[10.4230/LIPIcs.CSL.2012.381](https://doi.org/10.4230/LIPIcs.CSL.2012.381)
 
 ## Building and installation instructions
 
