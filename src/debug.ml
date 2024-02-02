@@ -124,9 +124,9 @@ let debug_case_info flags ci =
       nargs
       (pp_info ci.ci_pp_info))
 
-let debug_rel_context flags s env l =
+let debug_rel_context flags s env sigma l =
   if !debug_mode && List.exists (fun x -> List.mem x flags) debug_flag then
-    Feedback.msg_notice Pp.(str s ++ (Termops.Internal.print_rel_context (push_rel_context l env)))
+    Feedback.msg_notice Pp.(str s ++ (Termops.Internal.print_rel_context (push_rel_context l env) sigma))
 
 let not_implemented ?(reason = "no reason") env evd t =
   debug [`Not_implemented] (Printf.sprintf "not implemented (%s):" reason) env evd t;
