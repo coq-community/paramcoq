@@ -978,7 +978,7 @@ and weaken_unused_free_rels env_rc sigma term =
        apply_substitution_rel_context k (List.tl sub) acc tl
    in
 
-   debug_rel_context [`Fix] "env_rv = " Environ.empty_env (List.map toDecl env_rc);
+   debug_rel_context [`Fix] "env_rv = " Environ.empty_env sigma (List.map toDecl env_rc);
    let set = collect_free_vars 1 (Termops.free_rels sigma term) env_rc in
    let lst = Int.Set.fold (fun x acc -> x::acc) set [] in
    let lst = List.sort compare lst in
