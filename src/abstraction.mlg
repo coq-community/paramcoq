@@ -48,7 +48,7 @@ VERNAC COMMAND EXTEND ParametricityDefined CLASSIFIED AS SIDEFF STATE program
 }
 END
 
-VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF
+VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF STATE opaque_access
 | [ "Parametricity" ref(c) ] ->
   {
     command_reference default_arity (intern_reference_to_name c) None
@@ -79,7 +79,7 @@ VERNAC COMMAND EXTEND AbstractionReference CLASSIFIED AS SIDEFF
   }
 END
 
-VERNAC COMMAND EXTEND AbstractionRecursive CLASSIFIED AS SIDEFF
+VERNAC COMMAND EXTEND AbstractionRecursive CLASSIFIED AS SIDEFF STATE opaque_access
 | [ "Parametricity" "Recursive" reference(c) ] ->
   {
     command_reference_recursive default_arity (intern_reference_to_name c)
@@ -98,7 +98,7 @@ VERNAC COMMAND EXTEND AbstractionRecursive CLASSIFIED AS SIDEFF
   }
 END
 
-VERNAC COMMAND EXTEND Abstraction CLASSIFIED AS SIDEFF
+VERNAC COMMAND EXTEND Abstraction CLASSIFIED AS SIDEFF STATE opaque_access
 | [ "Parametricity" "Translation" constr(c) "as" ident(name)] ->
   {
     translate_command default_arity c name
@@ -113,30 +113,30 @@ VERNAC COMMAND EXTEND Abstraction CLASSIFIED AS SIDEFF
   }
 END
 
-VERNAC COMMAND EXTEND TranslateModule CLASSIFIED AS SIDEFF
+VERNAC COMMAND EXTEND TranslateModule CLASSIFIED AS SIDEFF STATE opaque_access
 | [ "Parametricity" "Module" global(qid) ] ->
   {
-    ignore (translate_module_command Parametricity.default_arity qid)
+    translate_module_command Parametricity.default_arity qid
   }
 | [ "Parametricity" "Module" global(qid) "as" ident(name) ] ->
   {
-    ignore (translate_module_command ~name Parametricity.default_arity qid)
+    translate_module_command ~name Parametricity.default_arity qid
   }
 | [ "Parametricity" "Module" global(qid) "arity" integer(arity) ] ->
   {
-    ignore (translate_module_command arity qid)
+    translate_module_command arity qid
   }
 | [ "Parametricity" "Module" global(qid) "as" ident(name) "arity" integer(arity) ] ->
   {
-    ignore (translate_module_command ~name arity qid)
+    translate_module_command ~name arity qid
   }
 | [ "Parametricity" "Module" global(qid) "arity" integer(arity) "as" ident(name)] ->
   {
-    ignore (translate_module_command ~name arity qid)
+    translate_module_command ~name arity qid
   }
 END
 
-VERNAC COMMAND EXTEND Realizer CLASSIFIED AS SIDEFF
+VERNAC COMMAND EXTEND Realizer CLASSIFIED AS SIDEFF STATE opaque_access
 | [ "Realizer" constr(c) "as" ident(name) ":=" constr(t) ] ->
   {
     realizer_command Parametricity.default_arity (Some name) c t
