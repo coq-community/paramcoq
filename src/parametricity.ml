@@ -281,6 +281,9 @@ let lamn n env b =
 (* compose_lam [xn:Tn;..;x1:T1] b = [x1:T1]..[xn:Tn]b *)
 let compose_lam l b = lamn (List.length l) l b
 
+(* use a functor to avoid having to thread this everywhere *)
+module WithOpaqueAccess (Access:sig val access : Global.indirect_accessor end) = struct
+
 (* G |- t ---> |G|, x1, x2 |- [x1,x2] in |t| *)
 let rec relation order evd env (t : constr) : constr =
   debug_string [`Relation] (Printf.sprintf "relation %d evd env t" order);
@@ -469,7 +472,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             (* let evd' = Evd.add_constraints !evd cte_constraints in *)
             (* evd := evd'; *)
             let fold = mkConstU cst in
-            let (def, _) = Global.force_proof Library.indirect_accessor op in
+            let (def, _) = Global.force_proof Access.access op in
             let def = CVars.subst_instance_constr names def in
             let etyp = of_constr typ in
             let edef = of_constr def in
@@ -1224,3 +1227,4 @@ and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params,
         List.map (to_constr !evdr) result
       end
   }
+end
