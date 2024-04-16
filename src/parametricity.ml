@@ -758,10 +758,9 @@ and translate_fix order evd env t =
        let (ind, u), ind_args = Inductiveops.find_inductive env !evd typ in
        let nparams = Inductiveops.inductive_nparams env ind in
        let _, realargs = List.chop nparams ind_args in
-       let erealargs = List.map of_constr realargs in
        List.iteri (fun i x ->
-          debug [`Fix] (Printf.sprintf "realargs.(%d) = " i) env !evd x) erealargs;
-       List.for_all (fun x -> List.mem x args) erealargs
+          debug [`Fix] (Printf.sprintf "realargs.(%d) = " i) env !evd x) realargs;
+       List.for_all (fun x -> List.mem x args) realargs
 
     and process_case env depth (fun_args : constr list) case =
 
@@ -781,16 +780,15 @@ and translate_fix order evd env t =
         in
         let i_params, i_realargs = List.chop i_nparams params_args in
         debug_string [`Fix] "make inductive family ...";
-        let ind_fam = Inductiveops.make_ind_family ((ind, EInstance.kind !evd u), i_params) in
+        let ind_fam = Inductiveops.make_ind_family ((ind, u), i_params) in
         debug_string [`Fix] "get_constructors";
         let constructors = Inductiveops.get_constructors env ind_fam in
         debug_string [`Fix] "done";
 
         assert (List.length i_realargs = i_nargs);
-        let ei_realargs = List.map of_constr i_realargs in
         let fun_args_i =
           List.map (fun x -> if x = c then mkRel 1
-                             else if List.mem x ei_realargs then mkRel (2 + i_nargs - (List.index (=) x ei_realargs))
+                             else if List.mem x i_realargs then mkRel (2 + i_nargs - (List.index (=) x i_realargs))
                              else lift (i_nargs + 1) x) fun_args
         in
         let theta = inst_args (depth + i_nargs + 1) fun_args_i in
@@ -815,11 +813,10 @@ and translate_fix order evd env t =
           else begin
             Array.mapi (fun i b ->
                let (cstr, u) as cstru = constructors.(i).Inductiveops.cs_cstr in
-               let pcstr = mkConstructU (cstr, EInstance.make u) in
+               let pcstr = mkConstructU (cstr, u) in
                let nrealdecls = Inductiveops.constructor_nrealdecls env cstr in
                let realdecls, b = decompose_lambda_n_decls !evd nrealdecls b in
-               let ei_params = List.map of_constr i_params in
-               let lifted_i_params = List.map (lift nrealdecls) ei_params in
+               let lifted_i_params = List.map (lift nrealdecls) i_params in
                let instr_cstr =
                  mkApp (pcstr,
                         Array.of_list
@@ -830,11 +827,11 @@ and translate_fix order evd env t =
                assert (Array.length concls = i_nargs);
                let fun_args =
                 List.map (fun x -> if x = c then instr_cstr
-                             else if List.mem x ei_realargs then (of_constr @@ concls.(i_nargs - (List.index (=) x ei_realargs)))
+                             else if List.mem x i_realargs then concls.(i_nargs - (List.index (=) x i_realargs))
                              else lift nrealdecls x) fun_args
                in
                let realdecls_R = translate_rel_context order evd env realdecls in
-               let sub = instr_cstr::(List.map of_constr @@ List.rev (Array.to_list concls)) in
+               let sub = instr_cstr::(List.rev (Array.to_list concls)) in
                let typ = substl sub typ in
                (* FIXME : translate twice here :*)
                let typ_R = relation order evd env_lams typ in
