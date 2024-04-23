@@ -13,7 +13,7 @@ open Names
 open EConstr
 open Pp
 
-let toCDecl old : (Constr.constr, Constr.constr) Context.Rel.Declaration.pt =
+let toCDecl old : Constr.rel_declaration =
   let (name,value,typ) = old in
   match value with
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
@@ -25,7 +25,7 @@ let toDecl old : rel_declaration =
   | Some value -> Context.Rel.Declaration.LocalDef (name,value,typ)
   | None -> Context.Rel.Declaration.LocalAssum (name,typ)
 
-let fromDecl (n: ('a, 'b) Context.Rel.Declaration.pt) =
+let fromDecl (n: _ Context.Rel.Declaration.pt) =
   match n with
   | Context.Rel.Declaration.LocalDef (name,value,typ) -> (name,Some value,typ)
   | Context.Rel.Declaration.LocalAssum (name,typ) -> (name,None,typ)

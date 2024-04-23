@@ -291,7 +291,7 @@ let rec relation order evd env (t : constr) : constr =
   debug [`Relation] "input =" env !evd t;
   let res = match kind !evd t with
     | Sort s ->
-      let r = Retyping.relevance_of_sort !evd s in
+      let r = Retyping.relevance_of_sort s in
       fold_nat (fun _ -> mkArrow (mkRel order) r) (prop_or_type env evd t) order
     | Prod (x, a, b) ->
         let x = Context.map_annot (Namegen.named_hd env !evd a) x in
@@ -335,7 +335,7 @@ let rec relation order evd env (t : constr) : constr =
     debug_mode := false;
     let env_R = translate_env order evd env in
     let na = Namegen.named_hd env !evd t Anonymous in
-    let lams = range (fun k -> (Context.make_annot (prime_name order k na) Sorts.Relevant, None, lift k (prime !evd order k t))) order in
+    let lams = range (fun k -> (Context.make_annot (prime_name order k na) ERelevance.relevant, None, lift k (prime !evd order k t))) order in
     let env_R = push_rel_context (List.map toDecl lams) env_R in
     debug_mode := true;
     debug [`Relation] "output =" env_R !evd res;
@@ -355,7 +355,7 @@ and translate order evd env (t : constr) : constr =
     | Sort _ | Prod (_,_,_) ->
         (* [..., _ : t'', _ : t', _ : t] *)
         let na = Namegen.named_hd env !evd t Anonymous in
-        let lams = range (fun k -> (Context.make_annot (prime_name order k na) Sorts.Relevant, lift k (prime !evd order k t))) order in
+        let lams = range (fun k -> (Context.make_annot (prime_name order k na) ERelevance.relevant, lift k (prime !evd order k t))) order in
         compose_lam lams (relation order evd env t)
 
     | App (c,l) ->
@@ -477,7 +477,7 @@ and translate_constant order (evd : Evd.evar_map ref) env cst : constr =
             let etyp = of_constr typ in
             let edef = of_constr def in
             let na = Namegen.named_hd env !evd etyp Anonymous in
-            let pred = mkLambda (Context.make_annot na Sorts.Relevant, etyp, substl (range (fun _ -> mkRel 1) order) (relation order evd env etyp)) in
+            let pred = mkLambda (Context.make_annot na ERelevance.relevant, etyp, substl (range (fun _ -> mkRel 1) order) (relation order evd env etyp)) in
             let res = translate order evd env edef in
             let uf_opaque_stmt = CoqConstants.eq env evd [| etyp; edef; fold|] in
             let evd', sort = Typing.sort_of env !evd etyp in
@@ -895,7 +895,7 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   let env_R =
     if List.exists (fun x -> List.mem x [`Fix]) debug_flag then begin
       let env_R = translate_env order evdr env in
-      let rc_order = rev_range (fun k -> Context.make_annot (Name (Id.of_string (Printf.sprintf "rel_%d" k))) Sorts.Relevant, None,
+      let rc_order = rev_range (fun k -> Context.make_annot (Name (Id.of_string (Printf.sprintf "rel_%d" k))) ERelevance.relevant, None,
                                          lift k (prime !evdr order k typ)) order in
       let env_R' = push_rel_context (List.map toDecl rc_order) env_R in
       debug [`Fix] "typ_R =" env_R' !evdr typ_R;
@@ -920,9 +920,9 @@ and rewrite_fixpoints order evdr env (depth : int) (fix : fixpoint) source targe
   debug [`Fix] "gen_path_type" Environ.empty_env !evdr gen_path_type;
   let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path_type in
   evdr := evd;
-  let let_gen acc = mkLetIn (Context.make_annot (Name (Id.of_string "gen_path")) Sorts.Relevant, hole, gen_path_type, acc) in
+  let let_gen acc = mkLetIn (Context.make_annot (Name (Id.of_string "gen_path")) ERelevance.relevant, hole, gen_path_type, acc) in
   let env_R' =
-    let decl_gen_path = Context.Rel.Declaration.LocalDef (Context.make_annot (Name (Id.of_string "gen_path")) Sorts.Relevant,hole,gen_path_type) in
+    let decl_gen_path = Context.Rel.Declaration.LocalDef (Context.make_annot (Name (Id.of_string "gen_path")) ERelevance.relevant,hole,gen_path_type) in
     push_rel decl_gen_path env_R in
   let res1 =
     (fold_nat (fun k acc ->
@@ -1029,7 +1029,7 @@ and rewrite_cofixpoints order evdr env (depth : int) (fix : cofixpoint) source t
   debug [`Fix] "gen_path_type" env !evdr gen_path;
   let evd, hole = new_evar_compat Environ.empty_env !evdr gen_path in
   evdr := evd;
-  let let_gen acc = mkLetIn (mkannot (Name (Id.of_string "gen_path")) Sorts.Relevant, hole, gen_path, acc) in
+  let let_gen acc = mkLetIn (mkannot (Name (Id.of_string "gen_path")) ERelevance.relevant, hole, gen_path, acc) in
   let_gen @@ (fold_nat (fun k acc ->
     let pred_sub =
       (range (fun x -> lift 1 (prime evd order (k+1+x) target)) (order-1 - k))
@@ -1074,7 +1074,7 @@ let rec translate_mind_body name order evdr env kn b inst =
         let full_arity, cst =
            Inductive.constrained_type_of_inductive ((b, ind), inst)
         in
-        let r = ind.mind_relevance in
+        let r = ERelevance.make ind.mind_relevance in
         let env = push_rel (toDecl (mkannot (Names.Name typename) r, None, (of_constr full_arity))) env in
         let env = Environ.add_constraints cst env in
         env
@@ -1118,16 +1118,10 @@ let rec translate_mind_body name order evdr env kn b inst =
   res
 
 
-and translate_mind_param order evd env (l : (Constr.constr, Constr.constr) Context.Rel.pt) =
-  let ctoe c =
-    let x, def, typ = fromDecl c in
-    toDecl (x, Option.map of_constr def, of_constr typ) in
-  let etoc c =
-    let x, def, typ = fromDecl c in
-    toCDecl (x, Option.map (to_constr !evd) def, to_constr !evd typ) in
-  let l = List.map ctoe l in
+and translate_mind_param order evd env (l : Constr.rel_context) =
+  let l = of_rel_context l in
   let l = translate_rel_context order evd env l in
-  List.map etoc l
+  List.map (to_rel_decl !evd) l
 
 and translate_mind_inductive name order evdr env ikn mut_entry inst (env_params, params, env_arities, env_arities_params) e =
   let p = List.length mut_entry.mind_params_ctxt in
