@@ -553,13 +553,7 @@ and translate_case_info order env ci =
   }
 
 and translate_case_printing order env cp =
-  let translate_bool_list l =
-    List.flatten (List.map (fun x -> range (fun _ -> x) (order + 1)) l)
-  in
-  {
-    ind_tags = (range (fun _ -> false) order) @ translate_bool_list cp.ind_tags;
-    cstr_tags = Array.map translate_bool_list cp.cstr_tags;
-    style = translate_style cp.style }
+  { style = translate_style cp.style }
 
 and translate_style x = x
 

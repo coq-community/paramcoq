@@ -106,15 +106,10 @@ let debug_case_info flags ci =
     let ndecls = String.concat ";" (List.map string_of_int (Array.to_list ci.ci_cstr_ndecls)) in
     let nargs = String.concat ";" (List.map string_of_int (Array.to_list ci.ci_cstr_nargs)) in
     let pp_info x =
-      let ind_tags = String.concat ";" (List.map string_of_bool x.ind_tags) in
-      let cstr_tags =
-        String.concat "," (List.map (fun tags -> String.concat ";" (List.map string_of_bool tags))
-        (Array.to_list x.cstr_tags))
-      in
       let string_of_style = match x.style with
         LetStyle -> "LetStyle" | IfStyle -> "IfStyle" | LetPatternStyle -> "LetPatternStyle" | MatchStyle -> "MatchStyle" | RegularStyle -> "RegularStyle"
       in
-      Printf.sprintf "ind_tags = %s, cstr_tags = %s, style = %s" ind_tags cstr_tags string_of_style
+      Printf.sprintf "style = %s" string_of_style
     in
     debug_string flags
   (Printf.sprintf "CASEINFO:inductive = %s.\nparam = %d.\nndecls = %s.\nnargs = %s.\npp_info = %s\n.EOFCASEINFO"
