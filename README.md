@@ -10,8 +10,8 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 [![Zulip][zulip-shield]][zulip-link]
 [![DOI][doi-shield]][doi-link]
 
-[docker-action-shield]: https://github.com/coq-community/paramcoq/workflows/Docker%20CI/badge.svg?branch=master
-[docker-action-link]: https://github.com/coq-community/paramcoq/actions?query=workflow:"Docker%20CI"
+[docker-action-shield]: https://github.com/coq-community/paramcoq/actions/workflows/docker-action.yml/badge.svg?branch=v8.20
+[docker-action-link]: https://github.com/coq-community/paramcoq/actions/workflows/docker-action.yml
 
 [contributing-shield]: https://img.shields.io/badge/contributions-welcome-%23f7931e.svg
 [contributing-link]: https://github.com/coq-community/manifesto/blob/master/CONTRIBUTING.md
@@ -45,7 +45,7 @@ is usable enough to "translate" a large chunk of the standard library.
 - Coq-community maintainer(s):
   - Pierre Roux ([**@proux01**](https://github.com/proux01))
 - License: [MIT License](LICENSE)
-- Compatible Coq versions: The master branch tracks the development version of Coq, see releases for compatibility with released versions of Coq
+- Compatible Coq versions: The v8.20 branch supports version 8.20 of Coq, see releases for compatibility with released versions of Coq
 - Additional dependencies: none
 - Coq namespace: `Param`
 - Related publication(s):

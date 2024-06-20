@@ -3,7 +3,7 @@
 
 opam-version: "2.0"
 maintainer: "Pierre Roux <pierre.roux@onera.fr>"
-version: "dev"
+version: "8.20.dev"
 
 homepage: "https://github.com/coq-community/paramcoq"
 dev-repo: "git+https://github.com/coq-community/paramcoq.git"
@@ -24,7 +24,7 @@ install: [
   [make "-C" "test-suite" "examples"] {with-test}
 ]
 depends: [
-  "coq" {= "dev" }
+  "coq" {>= "8.20" & < "8.21~" }
 ]
 
 tags: [
