@@ -1052,6 +1052,95 @@ open Declarations
 
 (* Translation of inductives. *)
 
+let get_arity t =
+  let decls, s = Term.decompose_prod_decls t in
+  match Constr.kind s with
+  | Sort (Type s) ->
+    begin match Univ.Universe.level s with
+    | None -> None
+    | Some l -> Some (decls, l)
+    end
+  | _ -> None
+
+(* Workaround to ensure that template universe levels are linear *)
+let fix_template_params order evdr env temp b params =
+  let templ = List.rev temp.template_param_levels in
+  (* For all template levels generate fresh levels for all translated parameters *)
+  let rec freshen umap templ params = match templ with
+  | [] ->
+    let () = assert (List.is_empty params) in
+    umap, []
+  | None :: templ ->
+    let decls, params = List.chop (order + 1) params in
+    let umap, params = freshen umap templ params in
+    umap, decls @ params
+  | Some _ :: templ ->
+    let decls, params = List.chop (order + 1) params in
+    let umap, params = freshen umap templ params in
+    let rel, pdecls = match decls with
+    | rel :: decls -> rel, decls
+    | _ -> assert false
+    in
+    let u0 = match get_arity (Context.Rel.Declaration.get_type rel) with
+    | None -> assert false
+    | Some (_, l) -> l
+    in
+    let umap, (ur, repl) = match Univ.Level.Map.find_opt u0 umap with
+    | None ->
+      let ur = UnivGen.fresh_level () in
+      let r = List.init order (fun _ -> UnivGen.fresh_level ()) in
+      let r = (ur, r) in
+      Univ.Level.Map.add u0 r umap, r
+    | Some r -> umap, r
+    in
+    let map pdecl u = match pdecl with
+    | Context.Rel.Declaration.LocalDef _ -> assert false
+    | Context.Rel.Declaration.LocalAssum (na, pdecl) ->
+      match get_arity pdecl with
+      | Some (ctx, _) ->
+        let u = Univ.Universe.make u in
+        let pdecl = Term.it_mkProd_or_LetIn (Constr.mkType u) ctx in
+        Context.Rel.Declaration.LocalAssum (na, pdecl)
+    | None -> assert false
+    in
+    let rel = map rel ur in
+    let pdecls = List.map2 map pdecls repl in
+    umap, rel :: pdecls @ params
+  in
+  let umap, decls = freshen Univ.Level.Map.empty templ params in
+  (* Add corresponding declaration and constraints for each new level *)
+  let fold_univs u0 accu = match Univ.Level.Map.find_opt u0 umap with
+  | None -> assert false (* unbound template level *)
+  | Some (ur, repl) ->
+    let accu = Univ.Level.Set.add ur accu in
+    let fold accu u = Univ.Level.Set.add u accu in
+    List.fold_left fold accu repl
+  in
+  let fold_cstrs (u0, cst, v) accu =
+    (* We know that v cannot be template because of the unbounded-from-below property *)
+    let () = assert (not (Univ.Level.Map.mem v umap)) in
+    match Univ.Level.Map.find_opt u0 umap with
+    | None ->
+      (* not template, this is technically allowed but dubious *)
+      Univ.Constraints.add (u0, cst, v) accu
+    | Some (ur, repl) ->
+      let accu = Univ.Constraints.add (ur, cst, v) accu in
+      let fold accu u = Univ.Constraints.add (u, cst, v) accu in
+      List.fold_left fold accu repl
+  in
+  let fold_templ u0 (ur, repl) accu =
+    (* This is needed to typecheck inner template applications of the inductive.
+       FIXME: when new-template-poly lands this can probably be removed. *)
+    let accu = Univ.Constraints.add (ur, Le, u0) accu in
+    let fold accu u = Univ.Constraints.add (u, Le, u0) accu in
+    List.fold_left fold accu repl
+  in
+  let (univs, cstrs) = temp.template_context in
+  let univs = Univ.Level.Set.fold fold_univs univs Univ.Level.Set.empty in
+  let cstrs = Univ.Constraints.fold fold_cstrs cstrs Univ.Constraints.empty in
+  let cstrs = Univ.Level.Map.fold fold_templ umap cstrs in
+  umap, (univs, cstrs), decls
+
 let rec translate_mind_body name order evdr env kn b inst =
   (* XXX: What is going on here? This doesn't make sense after cumulativity *)
   (* let env = push_context b.mind_universes env in *)
@@ -1082,6 +1171,12 @@ let rec translate_mind_body name order evdr env kn b inst =
   let mind_entry_params_R =
     translate_mind_param order evdr env (CVars.subst_instance_context inst b.mind_params_ctxt)
   in
+  let template_univs, mind_entry_params_R = match b.mind_template with
+  | None -> None, mind_entry_params_R
+  | Some temp ->
+    let umap, univs, params = fix_template_params order evdr env temp b mind_entry_params_R in
+    Some (umap, univs), params
+  in
   debug_string [`Inductive] "translatation of inductive ...";
   let mind_entry_inds_R =
     List.mapi
@@ -1091,13 +1186,35 @@ let rec translate_mind_body name order evdr env kn b inst =
   debug_evar_map [`Inductive] "translate_mind, evd = \n" env !evdr;
   let univs = match b.mind_universes with
     | Monomorphic ->
-      begin match b.mind_template with
+      begin match template_univs with
       | None -> Monomorphic_ind_entry
-      | Some t -> Template_ind_entry t.Declarations.template_context
+      | Some (_, ctx) -> Template_ind_entry ctx
       end
     | Polymorphic _ ->
       let uctx, _ = (Evd.univ_entry ~poly:true !evdr) in
       match uctx with Polymorphic_entry uctx -> Polymorphic_ind_entry uctx | _ -> assert false
+  in
+  let mind_entry_inds_R = match template_univs with
+  | None -> mind_entry_inds_R
+  | Some (umap, _) ->
+    let entry = match mind_entry_inds_R with
+    | [entry] -> entry
+    | _ -> assert false
+    in
+    let decls, sort = Term.decompose_prod_decls entry.mind_entry_arity in
+    let sort = match Constr.kind sort with
+    | Sort (Type u) ->
+      let u = Univ.Universe.repr u in
+      let map (u0, n) = match Univ.Level.Map.find_opt u0 umap with
+      | None -> [u0, n]
+      | Some (ur, repl) -> (ur, n) :: List.map (fun u -> u, n) repl
+      in
+      Constr.mkType (Univ.Universe.unrepr (List.map_append map u))
+    | _ -> sort
+    in
+    let arity = Term.it_mkProd_or_LetIn sort decls in
+    let entry = { entry with mind_entry_arity = arity } in
+    [entry]
   in
   let res = {
     mind_entry_record = None;
