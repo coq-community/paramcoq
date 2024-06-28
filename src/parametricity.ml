@@ -1064,17 +1064,17 @@ let get_arity t =
 
 (* Workaround to ensure that template universe levels are linear *)
 let fix_template_params order evdr env temp b params =
-  let templ = List.rev temp.template_param_levels in
+  let templ = List.rev temp.template_param_arguments in
   (* For all template levels generate fresh levels for all translated parameters *)
   let rec freshen umap templ params = match templ with
   | [] ->
     let () = assert (List.is_empty params) in
     umap, []
-  | None :: templ ->
+  | false :: templ ->
     let decls, params = List.chop (order + 1) params in
     let umap, params = freshen umap templ params in
     umap, decls @ params
-  | Some _ :: templ ->
+  | true :: templ ->
     let decls, params = List.chop (order + 1) params in
     let umap, params = freshen umap templ params in
     let rel, pdecls = match decls with
