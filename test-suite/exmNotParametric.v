@@ -1,4 +1,4 @@
-Require Import Coq.Logic.ClassicalFacts.
+From Coq Require Import ClassicalFacts.
 Inductive False_R : False -> False -> Prop :=.
 
 Inductive or_R (A₁ A₂ : Prop) (A_R : A₁ -> A₂ -> Prop) (B₁ B₂ : Prop)
