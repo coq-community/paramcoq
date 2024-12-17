@@ -216,7 +216,7 @@ and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
   debug_string [`Module] "--> declare_module";
   let open Declarations in
   let mp = mb.mod_mp in
-  match mb.mod_expr, mb.mod_type with
+  match Declareops.mod_expr mb, mb.mod_type with
   | Algebraic _, NoFunctor fields
   | FullStruct, NoFunctor fields ->
      let id = id_of_module_path mp in
@@ -299,7 +299,7 @@ and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
        end
      | (lab, SFBmodule mb') when
           match mb'.mod_type with NoFunctor _ ->
-            (match mb'.mod_expr with FullStruct | Algebraic _ -> true | _ -> false)
+            (match Declareops.mod_expr mb' with FullStruct | Algebraic _ -> true | _ -> false)
           | _ -> false
         ->
         declare_module ~opaque_access ~continuation arity mb'
