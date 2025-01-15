@@ -215,8 +215,8 @@ and id_of_module_path mp =
 and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
   debug_string [`Module] "--> declare_module";
   let open Declarations in
-  let mp = mb.mod_mp in
-  match Declareops.mod_expr mb, mb.mod_type with
+  let mp = Mod_declarations.mod_mp mb in
+  match Mod_declarations.mod_expr mb, Mod_declarations.mod_type mb with
   | Algebraic _, NoFunctor fields
   | FullStruct, NoFunctor fields ->
      let id = id_of_module_path mp in
@@ -230,7 +230,7 @@ and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
        ignore (Declaremods.end_module ()); continuation ())
      (fun continuation -> function
      | (lab, SFBconst cb) when (match cb.const_body with OpaqueDef _ -> false | Undef _ -> true | _ -> false) ->
-       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
+       let cst = Mod_subst.constant_of_delta_kn (Mod_declarations.mod_delta mb) (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
@@ -254,7 +254,7 @@ and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
        let poly = Declareops.constant_is_polymorphic cb in
        let scope = Locality.(Global ImportDefaultBehavior) in
        let kind = Decls.(IsDefinition Definition) in
-       let cst = Mod_subst.constant_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
+       let cst = Mod_subst.constant_of_delta_kn (Mod_declarations.mod_delta mb) (Names.KerName.make mp lab) in
        if try ignore (Relations.get_constant arity cst); true with Not_found -> false then
          continuation ()
        else
@@ -279,7 +279,7 @@ and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
        let env = Global.env () in
        let evd = Evd.from_env env in
        let evdr = ref evd in
-       let mut_ind = Mod_subst.mind_of_delta_kn mb.mod_delta (Names.KerName.make mp lab) in
+       let mut_ind = Mod_subst.mind_of_delta_kn (Mod_declarations.mod_delta mb) (Names.KerName.make mp lab) in
        let ind = (mut_ind, 0) in
        if try ignore (Relations.get_inductive arity ind); true with Not_found -> false then
          continuation ()
@@ -298,8 +298,8 @@ and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
          declare_inductive ~opaque_access ind_name ~continuation arity evdr env pind
        end
      | (lab, SFBmodule mb') when
-          match mb'.mod_type with NoFunctor _ ->
-            (match Declareops.mod_expr mb' with FullStruct | Algebraic _ -> true | _ -> false)
+          match Mod_declarations.mod_type mb' with NoFunctor _ ->
+            (match Mod_declarations.mod_expr mb' with FullStruct | Algebraic _ -> true | _ -> false)
           | _ -> false
         ->
         declare_module ~opaque_access ~continuation arity mb'
