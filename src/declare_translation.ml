@@ -199,10 +199,14 @@ let rec list_continuation final f l _ = match l with [] -> final ()
 let rec translate_module_command ~opaque_access ?name arity r  =
   check_nothing_ongoing ();
   let qid = r in
-  let mb = try Global.lookup_module (Nametab.locate_module qid)
+  let mp, mb =
+    try
+      let mp = Nametab.locate_module qid in
+      let mb = Global.lookup_module mp in
+      mp, mb
     with Not_found -> error Pp.(str "Unknown Module " ++ pr_qualid qid)
   in
-  declare_module ~opaque_access ?name arity mb
+  declare_module ~opaque_access ?name arity mp mb
 
 and id_of_module_path mp =
  let open Names in
@@ -212,10 +216,9 @@ and id_of_module_path mp =
    | MPfile dp -> List.hd (DirPath.repr dp)
    | MPbound id -> MBId.to_id id
 
-and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
+and declare_module ~opaque_access ?(continuation = ignore) ?name arity mp mb  =
   debug_string [`Module] "--> declare_module";
   let open Declarations in
-  let mp = Mod_declarations.mod_mp mb in
   match Mod_declarations.mod_expr mb, Mod_declarations.mod_type mb with
   | Algebraic _, NoFunctor fields
   | FullStruct, NoFunctor fields ->
@@ -302,7 +305,7 @@ and declare_module ~opaque_access ?(continuation = ignore) ?name arity mb  =
             (match Mod_declarations.mod_expr mb' with FullStruct | Algebraic _ -> true | _ -> false)
           | _ -> false
         ->
-        declare_module ~opaque_access ~continuation arity mb'
+        declare_module ~opaque_access ~continuation arity (MPdot (mp, lab)) mb'
 
      | (lab, _) ->
          Pp.(Flags.if_verbose msg_info (str (Printf.sprintf "Ignoring field '%s'." (Names.Label.to_string lab))));
