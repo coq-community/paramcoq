@@ -1175,7 +1175,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   | None -> None, mind_entry_params_R
   | Some temp ->
     let umap, univs, params = fix_template_params order evdr env temp b mind_entry_params_R in
-    Some (umap, univs), params
+    Some (umap, univs, temp.template_pseudo_sort_poly), params
   in
   debug_string [`Inductive] "translatation of inductive ...";
   let mind_entry_inds_R =
@@ -1188,7 +1188,7 @@ let rec translate_mind_body name order evdr env kn b inst =
     | Monomorphic ->
       begin match template_univs with
       | None -> Monomorphic_ind_entry
-      | Some (_, ctx) -> Template_ind_entry ctx
+      | Some (_, ctx, pseudo_sort_poly) -> Template_ind_entry { univs = ctx; pseudo_sort_poly }
       end
     | Polymorphic _ ->
       let uctx, _ = (Evd.univ_entry ~poly:true !evdr) in
@@ -1196,7 +1196,7 @@ let rec translate_mind_body name order evdr env kn b inst =
   in
   let mind_entry_inds_R = match template_univs with
   | None -> mind_entry_inds_R
-  | Some (umap, _) ->
+  | Some (umap, _, _) ->
     let entry = match mind_entry_inds_R with
     | [entry] -> entry
     | _ -> assert false
