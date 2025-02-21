@@ -25,7 +25,7 @@ let mkannot = Context.make_annot
 let error msg = CErrors.user_err msg
 
 let new_evar_compat env evd uf_opaque_stmt =
-  Evarutil.new_evar env evd uf_opaque_stmt
+  Evarutil.new_evar ~typeclass_candidate:false env evd uf_opaque_stmt
 
 module CoqConstants = struct
   let msg = "parametricity: unable to fetch constants"
