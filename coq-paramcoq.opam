@@ -12,12 +12,23 @@ license: "MIT"
 
 synopsis: "Plugin for generating parametricity statements to perform refinement proofs"
 description: """
-A Coq plugin providing commands for generating parametricity statements.
+/!\ Paramcoq is no longer actually maintained and released. It is only
+kept as a test case for Rocq's OCaml API. The release for Rocq 9.0
+will be the last one and is known to suffer some universe issues
+(for instance iit no longer enable to compile CoqEAL). Users are
+invited to switch to [coq-elpi](https://github.com/LPCIC/coq-elpi)
+derive.param2. One can look at
+[CoqEAL](https://github.com/coq-community/coqeal) for an example of
+porting. Main current caveat: support for mutual inductives isn't
+implemented yet.
+
+A Rocq plugin providing commands for generating parametricity statements.
 Typical applications of such statements are in data refinement proofs.
 Note that the plugin is still in an experimental state - it is not very user
 friendly (lack of good error messages) and still contains bugs. But it
 is usable enough to "translate" a large chunk of the standard library."""
 
+messages: ["/!\ This is the last release of paramcoq, more details on https://github.com/coq-community/paramcoq/blob/master/README.md"]
 build: [make "-j%{jobs}%"]
 install: [
   [make "install"]
