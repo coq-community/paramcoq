@@ -6,12 +6,12 @@ community: true
 action: true
 plugin: true
 doi: 10.4230/LIPIcs.CSL.2012.381
-branch: 'master'
+branch: 'v9.0'
 
 synopsis: Plugin for generating parametricity statements to perform refinement proofs
 
 description: |-
-  A Coq plugin providing commands for generating parametricity statements.
+  A Rocq plugin providing commands for generating parametricity statements.
   Typical applications of such statements are in data refinement proofs.
   Note that the plugin is still in an experimental state - it is not very user
   friendly (lack of good error messages) and still contains bugs. But it
@@ -43,12 +43,12 @@ license:
 
 supported_coq_versions:
   text: >-
-    The master branch tracks the development version of Coq, see
-    releases for compatibility with released versions of Coq
-  opam: '{= "dev" }'
+    The v9.0 branch supports version 9.0 of Rocq, see
+    releases for compatibility with released versions of Rocq
+  opam: '{>= "9.0" & < "9.1~" }'
 
 categories:
-- name: 'Miscellaneous/Coq Extensions'
+- name: 'Miscellaneous/Rocq Extensions'
 
 keywords:
 - name: paramcoq
@@ -59,10 +59,10 @@ namespace: Param
 
 opam-file-maintainer: 'Pierre Roux <pierre.roux@onera.fr>'
 
-opam-file-version: 'dev'
+opam-file-version: '9.0.dev'
 
 tested_coq_opam_versions:
-- version: 'dev'
+- version: '9.0'
 
 documentation: |-
   ## Usage and Commands

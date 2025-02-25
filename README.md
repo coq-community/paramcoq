@@ -10,8 +10,8 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 [![Zulip][zulip-shield]][zulip-link]
 [![DOI][doi-shield]][doi-link]
 
-[docker-action-shield]: https://github.com/coq-community/paramcoq/workflows/Docker%20CI/badge.svg?branch=master
-[docker-action-link]: https://github.com/coq-community/paramcoq/actions?query=workflow:"Docker%20CI"
+[docker-action-shield]: https://github.com/coq-community/paramcoq/actions/workflows/docker-action.yml/badge.svg?branch=v9.0
+[docker-action-link]: https://github.com/coq-community/paramcoq/actions/workflows/docker-action.yml
 
 [contributing-shield]: https://img.shields.io/badge/contributions-welcome-%23f7931e.svg
 [contributing-link]: https://github.com/coq-community/manifesto/blob/master/CONTRIBUTING.md
@@ -26,7 +26,7 @@ Follow the instructions on https://github.com/coq-community/templates to regener
 [doi-shield]: https://zenodo.org/badge/DOI/10.4230/LIPIcs.CSL.2012.381.svg
 [doi-link]: https://doi.org/10.4230/LIPIcs.CSL.2012.381
 
-A Coq plugin providing commands for generating parametricity statements.
+A Rocq plugin providing commands for generating parametricity statements.
 Typical applications of such statements are in data refinement proofs.
 Note that the plugin is still in an experimental state - it is not very user
 friendly (lack of good error messages) and still contains bugs. But it
@@ -45,7 +45,7 @@ is usable enough to "translate" a large chunk of the standard library.
 - Coq-community maintainer(s):
   - Pierre Roux ([**@proux01**](https://github.com/proux01))
 - License: [MIT License](LICENSE)
-- Compatible Coq versions: The master branch tracks the development version of Coq, see releases for compatibility with released versions of Coq
+- Compatible Coq versions: The v9.0 branch supports version 9.0 of Rocq, see releases for compatibility with released versions of Rocq
 - Additional dependencies: none
 - Coq namespace: `Param`
 - Related publication(s):

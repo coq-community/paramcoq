@@ -3,7 +3,7 @@
 
 opam-version: "2.0"
 maintainer: "Pierre Roux <pierre.roux@onera.fr>"
-version: "dev"
+version: "9.0.dev"
 
 homepage: "https://github.com/coq-community/paramcoq"
 dev-repo: "git+https://github.com/coq-community/paramcoq.git"
@@ -12,7 +12,7 @@ license: "MIT"
 
 synopsis: "Plugin for generating parametricity statements to perform refinement proofs"
 description: """
-A Coq plugin providing commands for generating parametricity statements.
+A Rocq plugin providing commands for generating parametricity statements.
 Typical applications of such statements are in data refinement proofs.
 Note that the plugin is still in an experimental state - it is not very user
 friendly (lack of good error messages) and still contains bugs. But it
@@ -24,11 +24,11 @@ install: [
   [make "-C" "test-suite" "examples"] {with-test}
 ]
 depends: [
-  "coq" {= "dev" }
+  "coq" {>= "9.0" & < "9.1~" }
 ]
 
 tags: [
-  "category:Miscellaneous/Coq Extensions"
+  "category:Miscellaneous/Rocq Extensions"
   "keyword:paramcoq"
   "keyword:parametricity"
   "keyword:OCaml modules"
